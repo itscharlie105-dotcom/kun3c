@@ -6,7 +6,10 @@
 
 ## 1. 怎麼打開網站
 
-**直接用滑鼠左鍵連點兩下 `index.html`**，網站就會在瀏覽器打開，不需要安裝任何東西、不需要連網路。
+網站已經上線了，網址是 **<https://itscharlie105-dotcom.github.io/kun3c/>**（更新方法看第 6 節）。
+
+要在自己電腦上看、或是想先改好再上傳，**直接用滑鼠左鍵連點兩下 `index.html`**，
+網站就會在瀏覽器打開，不需要安裝任何東西、不需要連網路。
 
 - 建議用 Chrome 或 Edge 開啟。
 - 七個頁面分別是：
@@ -151,26 +154,79 @@ specs: [
 
 ---
 
-## 6. 怎麼免費上線（GitHub Pages）
+## 6. 網站已經上線了：網址與更新方法
 
-想讓客人用網址就能看到網站，可以用 GitHub 免費空間。全程免費、不用信用卡。
+### 網址（可以直接貼給客人）
 
-1. 到 <https://github.com> 註冊一個帳號（已有帳號就登入）。
-2. 右上角 **＋** → **New repository**（新增儲存庫）。
-3. **Repository name** 填一個英文名字，例如 `kun3c`。
-4. 選 **Public**（公開），其他都不用動，按 **Create repository**。
-5. 在新頁面點 **uploading an existing file**（上傳現有檔案）。
-6. 把這個資料夾裡的**所有檔案與資料夾**（`index.html`、`products.html`、`product.html`、`cart.html`、`guide.html`、`about.html`、`orders.html`、`README.md`、`css` 資料夾、`js` 資料夾，有照片的話還有 `images` 資料夾）**整個拖進去**。
-7. 拖完後按下方綠色的 **Commit changes**。
-8. 點上方的 **Settings**（設定）→ 左邊選單的 **Pages**。
-9. 在 **Branch** 那一欄選 **main**、資料夾選 **/ (root)**，按 **Save**。
-10. 等 1–3 分鐘，重新整理這個頁面，上方會出現你的網址，格式是：
-    `https://你的帳號.github.io/kun3c/`
-11. 把這個網址貼給客人就可以了。
+**<https://itscharlie105-dotcom.github.io/kun3c/>**
 
-**之後要改東西怎麼辦？**
-在 GitHub 上點進要修改的檔案（例如 `js/products.js`）→ 按鉛筆圖示 → 直接修改 → 按 **Commit changes**，大約一分鐘後網站就會更新。
-或是改好本機檔案後，用 **Add file → Upload files** 重新上傳覆蓋。
+- 空間是 GitHub Pages，**完全免費、不會過期、不用信用卡**，而且有 https 安全連線。
+- 檔案放在這裡：<https://github.com/itscharlie105-dotcom/kun3c>
+- ⚠️ 這個儲存庫是**公開**的，裡面的檔案（含電話、Email、照片）任何人都看得到。
+  不想公開的東西不要放進這個資料夾。
+
+---
+
+### 更新方法 A：用終端機（最快，只要三行）
+
+改完桌面資料夾裡的檔案後（例如在 `js/products.js` 新增商品），打開 Mac 內建的「終端機」
+（按 Cmd + 空白鍵 → 輸入「終端機」→ Enter），**一行一行**貼上執行：
+
+```
+cd ~/Desktop/老爸的網站
+git add -A && git commit -m "更新商品"
+git push
+```
+
+- 第二行引號裡的字可以自己改，例如 `"新增三台筆電"`，那是給自己看的紀錄。
+- 按完第三行，**等大約 1 分鐘**，重新整理網站就會看到新內容。
+- 已經登入過了，以後都不用再輸入帳號密碼。
+
+---
+
+### 更新方法 B：在 GitHub 網頁上改（完全不用終端機）
+
+適合只想改個價格、改個庫存的時候：
+
+1. 打開 <https://github.com/itscharlie105-dotcom/kun3c>
+2. 點進 `js` 資料夾 → 點 `products.js`
+3. 點右上角的**鉛筆圖示**（Edit this file）
+4. 直接在網頁上修改內容
+5. 捲到最下面，按綠色的 **Commit changes**
+6. 等大約 1 分鐘，網站就會自動更新
+
+**要加商品照片**：在儲存庫首頁按 **Add file → Upload files**，把照片拖進去，
+再照上面的步驟去 `js/products.js` 把 `image` 欄位填上 `images/檔名.jpg`。
+
+> ⚠️ **用方法 B 改過之後**，網路上的版本會比你電腦裡的新。
+> 下次要用方法 A（終端機）更新前，請先跑一次 `git pull`，把網路上的改動抓回電腦，
+> 否則會出現衝突、推不上去。
+>
+> ```
+> cd ~/Desktop/老爸的網站
+> git pull
+> ```
+
+---
+
+### 哪些東西不會被上傳
+
+`.gitignore` 這個檔案已經設定好，下面兩樣永遠不會被傳到網路上：
+
+- `上線前檢查清單.md` —— 我們自己看的內部筆記
+- `.DS_Store` —— macOS 自動產生的系統檔
+
+如果以後有其他不想公開的檔案，把檔名加進 `.gitignore` 就好。
+
+---
+
+### 網站沒更新怎麼辦
+
+1. 先確認終端機有沒有跑完、有沒有出現紅色錯誤訊息。
+2. 等久一點（有時候要 2–3 分鐘）。
+3. 用 **Cmd + Shift + R** 強制重新整理瀏覽器，清掉舊的暫存。
+4. 到 <https://github.com/itscharlie105-dotcom/kun3c/actions> 看最上面那一筆是不是綠色勾勾；
+   如果是紅色叉叉，點進去看錯誤訊息。
 
 ---
 
