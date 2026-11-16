@@ -48,7 +48,17 @@
               <span><span>取貨方式</span><strong data-cfg="delivery"></strong></span></li>
             <li><span data-icon="handshake"></span>
               <span><span>面交地點</span><strong data-cfg="meetupArea"></strong></span></li>
+            <li><span data-icon="line"></span>
+              <span><span><span data-cfg="contactChannel">Facebook</span> 訊息</span>
+                <strong>由店長的女兒回覆</strong></span></li>
           </ul>
+          <div class="notes-box" style="border-left-color:var(--accent-2);border-color:rgba(59,130,246,.45);background:rgba(59,130,246,.08)">
+            <h3 style="color:var(--accent)">點 <span data-cfg="contactChannel">Facebook</span> 之前先說明</h3>
+            <p style="margin-bottom:0">那個帳號是<strong>店長阿坤的女兒</strong>的。店長本人不太會用電腦打字，
+              所以 <span data-cfg="contactChannel">Facebook</span> 的訊息都由女兒代為接收與回覆，
+              她會把你的需求轉達給店長。<strong>想直接找店長本人，打電話最快</strong>：
+              <a data-cfg-tel href="#">—</a>。</p>
+          </div>
           <p style="margin-top:18px"><a class="btn btn-contact btn-block" data-line="用 {管道} 聯絡我們"></a></p>
           <p class="hint"><span data-cfg="contactChannel">Facebook</span> 回覆最快；非營業時間的訊息會在隔天營業時間回覆。</p>
         </aside>
@@ -119,11 +129,103 @@
           <label class="sr-only" for="quote-text">詢價內容</label>
           <textarea class="order-text" id="quote-text" readonly></textarea>
           <div class="order-actions">
-            <button class="btn btn-primary" type="button" id="copy-quote">複製詢價內容</button>
+            <a class="btn btn-primary" id="mail-quote" href="#">用 Email 寄給我們</a>
+            <button class="btn btn-ghost" type="button" id="copy-quote">複製詢價內容</button>
             <a class="btn btn-contact" data-line="用 {管道} 傳給店家"></a>
           </div>
           <div class="callout">
-            <p>請把上面的內容貼到 <span data-cfg="contactChannel">Facebook</span> 給我們。若要面交估價，也請用 <span data-cfg="contactChannel">Facebook</span> 約定確切的地點與時間（汐止地區）。</p>
+            <p>三種方式擇一即可：按「用 Email 寄給我們」會自動開啟你的郵件軟體、內容都填好了，按寄出就完成；
+              或是複製內容後用 <span data-cfg="contactChannel">Facebook</span> 傳給我們。
+              若要面交估價，請在訊息裡一起約時間地點（汐止地區）。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 找機器需求單 -->
+    <section class="section" id="wanted" style="padding-top:0">
+      <div class="section-head">
+        <h2 class="section-title">找不到想要的機型？告訴我們</h2>
+        <p>網站上沒有的機器，留下需求與預算，有收到符合的機器我們會第一時間通知你，不收任何費用。</p>
+      </div>
+
+      <div class="panel panel-pad">
+        <form id="wanted-form" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="w-name">姓名／稱呼 <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" type="text" id="w-name" name="w-name" autocomplete="name"
+                     data-rules="required" aria-describedby="err-w-name">
+              <p class="field-error" id="err-w-name" role="alert"></p>
+            </div>
+            <div class="field">
+              <label for="w-contact">聯絡方式 <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" type="text" id="w-contact" name="w-contact"
+                     placeholder="電話、Email 或 Facebook 名稱"
+                     data-rules="required" aria-describedby="err-w-contact">
+              <p class="field-error" id="err-w-contact" role="alert"></p>
+            </div>
+
+            <div class="field">
+              <label for="w-category">想找的類別 <span class="req" aria-hidden="true">*</span></label>
+              <select class="input" id="w-category" name="w-category">
+                <option value="筆記型電腦">筆記型電腦</option>
+                <option value="桌上型主機">桌上型主機</option>
+                <option value="電視與顯示器">電視與顯示器</option>
+                <option value="零組件與周邊">零組件與周邊</option>
+                <option value="還不確定，請推薦">還不確定，請幫我推薦</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="w-budget">預算（可留空）</label>
+              <input class="input" type="text" id="w-budget" name="w-budget"
+                     placeholder="例：10000 以內、8000～12000">
+            </div>
+
+            <div class="field field--full">
+              <label for="w-need">想要的機型或用途 <span class="req" aria-hidden="true">*</span></label>
+              <textarea class="input" id="w-need" name="w-need" data-rules="required"
+                        aria-describedby="err-w-need"
+                        placeholder="例：想要 14 吋輕薄筆電給小孩上課用，要有 16G 記憶體&#10;或：想找 55 吋以上的 4K 電視，可以面交自取"></textarea>
+              <p class="field-error" id="err-w-need" role="alert"></p>
+              <p class="hint">不知道規格也沒關係，直接寫用途（文書、追劇、剪片、打遊戲）就可以。</p>
+            </div>
+
+            <div class="field">
+              <label for="w-when">希望多久內要</label>
+              <select class="input" id="w-when" name="w-when">
+                <option value="不急，有好貨再通知我">不急，有好貨再通知我</option>
+                <option value="一週內">一週內</option>
+                <option value="一個月內">一個月內</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="w-note">備註（可留空）</label>
+              <input class="input" type="text" id="w-note" name="w-note"
+                     placeholder="例：希望可以面交、需要開發票">
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit" style="margin-top:18px">
+            產生需求內容
+          </button>
+          <p class="hint" style="margin-top:10px">本站沒有後端伺服器，按下去不會自動送出，
+            下一步可以選擇用 Email 寄給我們，或複製內容用訊息傳給我們。</p>
+        </form>
+
+        <!-- 送出後的結果 -->
+        <div id="wanted-done" hidden>
+          <h3>需求內容已產生</h3>
+          <label class="sr-only" for="wanted-text">需求內容</label>
+          <textarea class="order-text" id="wanted-text" readonly></textarea>
+          <div class="order-actions">
+            <a class="btn btn-primary" id="mail-wanted" href="#">用 Email 寄給我們</a>
+            <button class="btn btn-ghost" type="button" id="copy-wanted">複製需求內容</button>
+            <a class="btn btn-contact" data-line="用 {管道} 傳給店家"></a>
+          </div>
+          <div class="callout">
+            <p>按「用 Email 寄給我們」會開啟你的郵件軟體，收件者與內容都已經填好，按下寄出就完成了。
+              沒有設定郵件軟體的話，就複製內容用 <span data-cfg="contactChannel">Facebook</span> 傳給我們。</p>
           </div>
         </div>
       </div>

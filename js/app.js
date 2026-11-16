@@ -336,12 +336,35 @@
       '<span>營業時間 ' + esc(CFG.hours || '') + '</span></div>';
   }
 
+  // 聯絡按鈕下面那一行小字（例如「訊息由店長的女兒代為回覆」）
+  function contactNoteHTML() {
+    if (!CFG.contactNote || !contactReady()) { return ''; }
+    return '<small class="contact-note">' + esc(CFG.contactNote) + '</small>';
+  }
+
   // 產生一顆聯絡按鈕；聯絡管道尚未設定時會自動改成導向聯絡表單
   function contactButton(cls, label) {
     var ready = contactReady();
     var text = ready ? channelLabel(label) : '填表單聯絡我們';
-    return '<a class="' + cls + '" href="' + esc(contactHref()) + '"' +
+    var link = '<a class="' + cls + '" href="' + esc(contactHref()) + '"' +
       (ready ? ' target="_blank" rel="noopener"' : '') + '>' + channelIcon() + esc(text) + '</a>';
+    var note = contactNoteHTML();
+    return note ? '<span class="contact-wrap">' + link + note + '</span>' : link;
+  }
+
+  // 幫寫在 HTML 裡的聯絡按鈕補上同一行說明（只會補一次）
+  function addContactNote(el) {
+    if (!CFG.contactNote || !contactReady()) { return; }
+    var parent = el.parentNode;
+    if (!parent || (parent.className || '').indexOf('contact-wrap') >= 0) { return; }
+    var wrap = document.createElement('span');
+    wrap.className = 'contact-wrap';
+    parent.insertBefore(wrap, el);
+    wrap.appendChild(el);
+    var note = document.createElement('small');
+    note.className = 'contact-note';
+    note.textContent = CFG.contactNote;
+    wrap.appendChild(note);
   }
 
   // 導覽列互動：漢堡選單、分類下拉、Esc 關閉
@@ -396,6 +419,7 @@
       }
       var label = channelLabel(el.getAttribute('data-line') || '用 {管道} 問問');
       el.innerHTML = channelIcon() + esc(ready ? label : '填表單聯絡我們');
+      addContactNote(el);
     });
   }
 
@@ -698,8 +722,10 @@
       countEl.textContent = '共 ' + list.length + ' 件商品';
       grid.innerHTML = list.length
         ? list.map(productCard).join('')
-        : emptyState('找不到符合條件的商品', '試著放寬價格區間或取消幾個篩選條件。',
-          '<button class="btn btn-primary" type="button" id="clear-filter-empty">清除篩選</button>');
+        : emptyState('找不到符合條件的商品', '試著放寬價格區間，或是告訴我們你想找什麼機型。',
+          '<div class="hero-actions" style="justify-content:center">' +
+          '<button class="btn btn-primary" type="button" id="clear-filter-empty">清除篩選</button>' +
+          '<a class="btn btn-ghost" href="about.html#wanted">告訴我們你想找什麼</a></div>');
     }
 
     function update(fromForm) {
@@ -1170,37 +1196,95 @@
     render();
   }
 
-  /* ---------------- 關於我們：收購詢價表單 ---------------- */
-  function initAbout() {
-    var form = $('#quote-form');
-    if (!form) { return; }
-    bindLiveValidate(form);
-    form.addEventListener('submit', function (ev) {
-      ev.preventDefault();
-      if (!validateForm(form)) { return; }
-      var lines = [];
-      lines.push('【' + (CFG.storeName || '') + '　收購詢價】');
-      lines.push('姓名：' + $('#q-name', form).value.trim());
-      lines.push('聯絡方式：' + $('#q-contact', form).value.trim());
-      lines.push('品項類別：' + $('#q-category', form).value);
-      lines.push('型號：' + ($('#q-model', form).value.trim() || '未提供'));
-      lines.push('狀況描述：' + ($('#q-desc', form).value.trim() || '未提供'));
-      lines.push('期望價格：' + ($('#q-price', form).value.trim() || '由店家評估'));
-      lines.push('--------------------------------');
-      lines.push('※ 請把這段內容貼到 ' + channelName() + ' 給我們，並用 ' + channelName() +
-        ' 約定面交時間與地點。');
-      var text = lines.join('\n');
+  /* ---------------- 關於我們：兩張表單（收購詢價／找機器需求單） ---------------- */
 
-      form.setAttribute('hidden', '');
-      var done = $('#quote-done');
-      done.removeAttribute('hidden');
-      $('#quote-text').value = text;
-      fillSlots(done);
-      var btn = $('#copy-quote');
-      btn.innerHTML = icon('copy') + '複製詢價內容';
-      btn.addEventListener('click', function () { copyText(text, btn); });
-      done.scrollIntoView({ block: 'start' });
-    });
+  // 產生 mailto 連結，讓客人一鍵開啟郵件軟體，收件者與內容都先填好
+  function mailtoHref(subject, body) {
+    return 'mailto:' + (CFG.email || '') +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body=' + encodeURIComponent(body);
+  }
+
+  // 表單送出後：收起表單、把內容顯示出來，並備好 Email／複製／私訊三種送出方式
+  function showFormResult(cfg) {
+    cfg.form.setAttribute('hidden', '');
+    var done = $(cfg.done);
+    done.removeAttribute('hidden');
+    $(cfg.textBox).value = cfg.text;
+
+    var mail = $(cfg.mailBtn);
+    mail.setAttribute('href', mailtoHref(cfg.subject, cfg.text));
+    mail.innerHTML = icon('mail') + '用 Email 寄給我們';
+
+    fillSlots(done);
+
+    var copyBtn = $(cfg.copyBtn);
+    copyBtn.innerHTML = icon('copy') + cfg.copyLabel;
+    copyBtn.addEventListener('click', function () { copyText(cfg.text, copyBtn); });
+    done.scrollIntoView({ block: 'start' });
+  }
+
+  function initAbout() {
+    var quote = $('#quote-form');
+    if (quote) {
+      bindLiveValidate(quote);
+      quote.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        if (!validateForm(quote)) { return; }
+        var name = $('#q-name', quote).value.trim();
+        var lines = [];
+        lines.push('【' + (CFG.storeName || '') + '　收購詢價】');
+        lines.push('姓名：' + name);
+        lines.push('聯絡方式：' + $('#q-contact', quote).value.trim());
+        lines.push('品項類別：' + $('#q-category', quote).value);
+        lines.push('型號：' + ($('#q-model', quote).value.trim() || '未提供'));
+        lines.push('狀況描述：' + ($('#q-desc', quote).value.trim() || '未提供'));
+        lines.push('期望價格：' + ($('#q-price', quote).value.trim() || '由店家評估'));
+        lines.push('--------------------------------');
+        lines.push('※ 這是客人填寫的收購詢價單。');
+        showFormResult({
+          form: quote,
+          done: '#quote-done',
+          textBox: '#quote-text',
+          mailBtn: '#mail-quote',
+          copyBtn: '#copy-quote',
+          copyLabel: '複製詢價內容',
+          subject: '【收購詢價】' + name,
+          text: lines.join('\n')
+        });
+      });
+    }
+
+    var wanted = $('#wanted-form');
+    if (wanted) {
+      bindLiveValidate(wanted);
+      wanted.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        if (!validateForm(wanted)) { return; }
+        var name = $('#w-name', wanted).value.trim();
+        var lines = [];
+        lines.push('【' + (CFG.storeName || '') + '　找機器需求單】');
+        lines.push('姓名：' + name);
+        lines.push('聯絡方式：' + $('#w-contact', wanted).value.trim());
+        lines.push('想找的類別：' + $('#w-category', wanted).value);
+        lines.push('機型或用途：' + $('#w-need', wanted).value.trim());
+        lines.push('預算：' + ($('#w-budget', wanted).value.trim() || '未指定'));
+        lines.push('希望多久內要：' + $('#w-when', wanted).value);
+        lines.push('備註：' + ($('#w-note', wanted).value.trim() || '無'));
+        lines.push('--------------------------------');
+        lines.push('※ 這是客人填寫的找機器需求單，有符合的機器進來請回覆他。');
+        showFormResult({
+          form: wanted,
+          done: '#wanted-done',
+          textBox: '#wanted-text',
+          mailBtn: '#mail-wanted',
+          copyBtn: '#copy-wanted',
+          copyLabel: '複製需求內容',
+          subject: '【找機器需求單】' + name,
+          text: lines.join('\n')
+        });
+      });
+    }
   }
 
   /* ---------------- 啟動 ---------------- */

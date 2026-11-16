@@ -452,6 +452,10 @@ fieldset { border: 0; margin: 0; padding: 0; }
 }
 .callout p { margin: 0; }
 
+/* ---------- 聯絡按鈕下面的說明小字 ---------- */
+.contact-wrap { display: inline-flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.contact-note { color: var(--text-dim); font-size: .78rem; line-height: 1.4; text-align: center; }
+
 /* ---------- 店長介紹（首頁） ---------- */
 .owner-grid { display: grid; grid-template-columns: auto 1fr; gap: 34px; align-items: center; }
 .owner-photo {
