@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>購物車與結帳｜汐止阿坤3C工作室</title>
+<meta name="description" content="確認購物車商品與數量、選擇宅配或汐止面交，填寫聯絡資料後產生可複製的訂單內容，再用 Facebook 傳給店家完成訂購。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%230B0F14'/%3E%3Crect%20x='6'%20y='9'%20width='20'%20height='13'%20rx='2'%20fill='none'%20stroke='%2322D3EE'%20stroke-width='2'/%3E%3Cpath%20d='M12%2026h8'%20stroke='%2322D3EE'%20stroke-width='2'%20stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-title="購物車與結帳" data-page="cart">
+<a class="sr-only" href="#main">跳到主要內容</a>
+<header class="site-header" id="site-header"></header>
+
+<main id="main">
+  <div class="wrap">
+    <nav class="crumb" aria-label="麵包屑">
+      <a href="index.html">首頁</a><span>/</span><span>購物車</span>
+    </nav>
+
+    <div class="section">
+      <div class="section-head">
+        <h1 class="section-title">購物車與結帳</h1>
+        <p>本站沒有線上刷卡，送出後會產生訂單內容，請用 <span data-cfg="contactChannel">Facebook</span> 傳給我們確認付款與取貨方式。</p>
+      </div>
+
+      <!-- 購物車是空的 -->
+      <div id="cart-empty" hidden>
+        <div class="empty-state">
+          <span data-icon="box"></span>
+          <h2>購物車還是空的</h2>
+          <p>先去逛逛最新上架的中古3C吧。</p>
+          <a class="btn btn-primary" href="products.html">去逛商品</a>
+          <p class="hint" style="margin-top:14px">想找之前送出的訂單？<a href="orders.html">看訂單紀錄</a></p>
+        </div>
+      </div>
+
+      <!-- 購物車內容 ＋ 結帳 -->
+      <div class="cart-layout" id="cart-main" hidden>
+        <div>
+          <div class="panel" id="cart-items"></div>
+
+          <form class="panel panel-pad" id="checkout-form" novalidate style="margin-top:20px">
+            <h2 class="section-title" style="font-size:1.2rem">填寫訂購資料</h2>
+            <div class="form-grid">
+              <div class="field">
+                <label for="name">姓名 <span class="req" aria-hidden="true">*</span></label>
+                <input class="input" type="text" id="name" name="name" autocomplete="name"
+                       data-rules="required" aria-describedby="err-name">
+                <p class="field-error" id="err-name" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="phone">電話 <span class="req" aria-hidden="true">*</span></label>
+                <input class="input" type="tel" id="phone" name="phone" autocomplete="tel"
+                       placeholder="0912-345-678" data-rules="required|phone" aria-describedby="err-phone">
+                <p class="field-error" id="err-phone" role="alert"></p>
+              </div>
+              <div class="field field--full">
+                <label for="email">Email <span class="req" aria-hidden="true">*</span></label>
+                <input class="input" type="email" id="email" name="email" autocomplete="email"
+                       placeholder="abc@gmail.com" data-rules="required|email" aria-describedby="err-email">
+                <p class="field-error" id="err-email" role="alert"></p>
+              </div>
+
+              <fieldset class="field field--full">
+                <legend class="field-legend">取貨方式 <span class="req" aria-hidden="true">*</span></legend>
+                <div class="radio-row">
+                  <label class="radio-card">
+                    <input type="radio" name="method" value="宅配" checked>
+                    <span>全台宅配（運費 160 元，滿 10,000 元免運）</span>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="method" value="面交">
+                    <span>汐止面交（免運費）</span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <div class="field field--full" id="field-address">
+                <label for="address">宅配地址 <span class="req" aria-hidden="true">*</span></label>
+                <input class="input" type="text" id="address" name="address" autocomplete="street-address"
+                       placeholder="例：新北市汐止區大同路一段 123 號 5 樓"
+                       data-rules="required" aria-describedby="err-address">
+                <p class="field-error" id="err-address" role="alert"></p>
+              </div>
+
+              <div class="field field--full">
+                <label for="note">備註（選填）</label>
+                <textarea class="input" id="note" name="note"
+                          placeholder="例：希望週六下午面交、想加購記憶體"></textarea>
+                <p class="hint">選擇面交者，送出後請用 <span data-cfg="contactChannel">Facebook</span> 與我們約定確切地點與時間。</p>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-block" type="submit" style="margin-top:18px">
+              送出訂單並產生訂單內容
+            </button>
+          </form>
+        </div>
+
+        <aside class="panel panel-pad summary" aria-label="結帳摘要">
+          <h2 class="section-title" style="font-size:1.15rem">結帳摘要</h2>
+          <div class="sum-row"><span>商品總額</span><strong id="sum-subtotal">NT$ 0</strong></div>
+          <div class="sum-row"><span>運費</span><strong id="sum-ship">NT$ 0</strong></div>
+          <div class="sum-total"><span>應付總額</span><span class="price" id="sum-total">NT$ 0</span></div>
+          <p class="ship-hint" id="ship-hint"></p>
+          <p class="hint" style="margin-top:14px">送出後不會自動扣款，我們會在 <span data-cfg="contactChannel">Facebook</span> 回覆付款方式（匯款或面交現金）。</p>
+        </aside>
+      </div>
+
+      <!-- 訂單成立確認 -->
+      <div id="order-done" hidden>
+        <div class="order-done">
+          <div class="done-mark"><span data-icon="check"></span></div>
+          <h2>訂單已成立</h2>
+          <p>訂單編號</p>
+          <p class="order-no" id="order-no" tabindex="-1">—</p>
+          <label class="sr-only" for="order-text">訂單內容</label>
+          <textarea class="order-text" id="order-text" readonly></textarea>
+          <div class="order-actions">
+            <button class="btn btn-primary" type="button" id="copy-order">複製訂單內容</button>
+            <a class="btn btn-contact" data-line="用 {管道} 傳給店家"></a>
+          </div>
+          <div class="callout">
+            <p>請把訂單內容貼到 <span data-cfg="contactChannel">Facebook</span> 給我們，我們會回覆付款與取貨方式。</p>
+          </div>
+          <p style="margin-top:18px">
+            <a class="btn btn-ghost" href="products.html">繼續購物</a>
+            <a class="btn btn-ghost" href="orders.html">查看訂單紀錄</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/svg.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>關於我們與聯絡方式｜汐止阿坤3C工作室</title>
+<meta name="description" content="汐止在地的中古3C工作室，每台機器實機檢測、誠實標示成色。提供電話、Email、Facebook 聯絡方式與二手電腦電視收購詢價表單。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%230B0F14'/%3E%3Crect%20x='6'%20y='9'%20width='20'%20height='13'%20rx='2'%20fill='none'%20stroke='%2322D3EE'%20stroke-width='2'/%3E%3Cpath%20d='M12%2026h8'%20stroke='%2322D3EE'%20stroke-width='2'%20stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-title="關於我們與聯絡方式" data-page="about">
+<a class="sr-only" href="#main">跳到主要內容</a>
+<header class="site-header" id="site-header"></header>
+
+<main id="main">
+  <div class="wrap">
+    <nav class="crumb" aria-label="麵包屑">
+      <a href="index.html">首頁</a><span>/</span><span>關於我們</span>
+    </nav>
+
+    <div class="section">
+      <div class="section-head">
+        <h1 class="section-title">關於<span data-cfg="storeName"></span></h1>
+        <p>汐止在地、誠實標示成色、每台機器都實機檢測。</p>
+      </div>
+
+      <div class="about-layout">
+        <article class="panel panel-pad">
+          <h2>我們是誰</h2>
+          <p>汐止阿坤3C工作室是一間開在汐止的小型中古3C工作室。我們沒有華麗的店面，也沒有業務話術，店裡就是一張工作桌、一堆測試中的機器，還有一個修了二十幾年電腦的老闆。從筆電、桌上型主機到大尺寸電視與顯示器，每一台進來的機器都是老闆親自拆開、清潔、測試過才會上架。</p>
+          <h2>為什麼敢把缺點寫出來</h2>
+          <p>買二手最怕的就是「照片看起來很新，拿到才發現一堆問題」。所以我們選擇把話講在前面：刮痕在哪、電池剩多少、哪裡有掉漆，全部寫在商品頁的「誠實說明」裡。成色分成 A+、A、B、C 四級，標準公開在購物須知頁，不會用模糊的「九成新」帶過。價格會因為成色不同而不同，但你拿到的東西，一定跟你在網站上看到的一樣。</p>
+          <h2>每一台都實機檢測</h2>
+          <p>我們的流程是：外觀與零件逐項檢查 → 燒機與效能實測（含硬碟健康度、記憶體測試、電池循環次數）→ 內部除塵、更換散熱膏、重灌乾淨系統。檢測沒過的機器不會上架，寧可少賣一台，也不想讓客人花錢買麻煩。買回去之後有任何問題，保固期內直接用 <span data-cfg="contactChannel">Facebook</span> 找我們，汐止面交當面處理最快。</p>
+        </article>
+
+        <aside class="panel panel-pad" aria-label="聯絡資訊">
+          <h2>聯絡資訊</h2>
+          <ul class="info-list">
+            <li><span data-icon="phone"></span>
+              <span><span>電話（可直接點擊撥號）</span><strong><a data-cfg-tel href="#">—</a></strong></span></li>
+            <li><span data-icon="mail"></span>
+              <span><span>Email</span><strong><a data-cfg-mail href="#">—</a></strong></span></li>
+            <li><span data-icon="clock"></span>
+              <span><span>營業時間</span><strong data-cfg="hours"></strong></span></li>
+            <li><span data-icon="truck"></span>
+              <span><span>取貨方式</span><strong data-cfg="delivery"></strong></span></li>
+            <li><span data-icon="handshake"></span>
+              <span><span>面交地點</span><strong data-cfg="meetupArea"></strong></span></li>
+          </ul>
+          <p style="margin-top:18px"><a class="btn btn-contact btn-block" data-line="用 {管道} 聯絡我們"></a></p>
+          <p class="hint"><span data-cfg="contactChannel">Facebook</span> 回覆最快；非營業時間的訊息會在隔天營業時間回覆。</p>
+        </aside>
+      </div>
+    </div>
+
+    <!-- 收購詢價 -->
+    <section class="section" id="contact-form" style="padding-top:0">
+      <div class="section-head">
+        <h2 class="section-title">舊電腦、舊電視想賣？填表讓我們估價</h2>
+        <p>填完按送出會產生一段可複製的文字，把它貼到 <span data-cfg="contactChannel">Facebook</span> 傳給我們，就能開始估價。</p>
+      </div>
+
+      <div class="panel panel-pad">
+        <form id="quote-form" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="q-name">姓名 <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" type="text" id="q-name" name="q-name" autocomplete="name"
+                     data-rules="required" aria-describedby="err-q-name">
+              <p class="field-error" id="err-q-name" role="alert"></p>
+            </div>
+            <div class="field">
+              <label for="q-contact">聯絡方式 <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" type="text" id="q-contact" name="q-contact"
+                     placeholder="電話或 Facebook 名稱" data-rules="required" aria-describedby="err-q-contact">
+              <p class="field-error" id="err-q-contact" role="alert"></p>
+            </div>
+            <div class="field">
+              <label for="q-category">想出售的品項類別 <span class="req" aria-hidden="true">*</span></label>
+              <select class="input" id="q-category" name="q-category" data-rules="required"
+                      aria-describedby="err-q-category">
+                <option value="筆記型電腦">筆記型電腦</option>
+                <option value="桌上型主機">桌上型主機</option>
+                <option value="電視與顯示器">電視與顯示器</option>
+                <option value="零組件與周邊">零組件與周邊</option>
+                <option value="其他">其他（請在狀況描述說明）</option>
+              </select>
+              <p class="field-error" id="err-q-category" role="alert"></p>
+            </div>
+            <div class="field">
+              <label for="q-model">型號</label>
+              <input class="input" type="text" id="q-model" name="q-model"
+                     placeholder="例：ThinkPad X390、LG 55UP7750">
+            </div>
+            <div class="field field--full">
+              <label for="q-desc">狀況描述 <span class="req" aria-hidden="true">*</span></label>
+              <textarea class="input" id="q-desc" name="q-desc" data-rules="required"
+                        aria-describedby="err-q-desc"
+                        placeholder="例：使用三年，外觀有刮痕，可正常開機，電池大約撐 2 小時"></textarea>
+              <p class="field-error" id="err-q-desc" role="alert"></p>
+            </div>
+            <div class="field field--full">
+              <label for="q-price">期望價格</label>
+              <input class="input" type="text" id="q-price" name="q-price"
+                     placeholder="不確定可以留空，由我們評估">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" style="margin-top:18px">
+            產生詢價內容
+          </button>
+          <p class="hint" style="margin-top:10px">本站沒有後端伺服器，送出後不會自動寄出，請記得把產生的文字用 <span data-cfg="contactChannel">Facebook</span> 傳給我們。</p>
+        </form>
+
+        <!-- 送出後的結果 -->
+        <div id="quote-done" hidden>
+          <h3>詢價內容已產生</h3>
+          <label class="sr-only" for="quote-text">詢價內容</label>
+          <textarea class="order-text" id="quote-text" readonly></textarea>
+          <div class="order-actions">
+            <button class="btn btn-primary" type="button" id="copy-quote">複製詢價內容</button>
+            <a class="btn btn-contact" data-line="用 {管道} 傳給店家"></a>
+          </div>
+          <div class="callout">
+            <p>請把上面的內容貼到 <span data-cfg="contactChannel">Facebook</span> 給我們。若要面交估價，也請用 <span data-cfg="contactChannel">Facebook</span> 約定確切的地點與時間（汐止地區）。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 面交說明 -->
+    <section class="section" style="padding-top:0">
+      <div class="panel panel-pad">
+        <h2>面交說明</h2>
+        <p>我們的面交地點在<strong>汐止</strong>。為了不讓雙方白跑一趟，請先用 <span data-cfg="contactChannel">Facebook</span> 告知你方便的時間，我們會回覆確切的面交地點。建議約在有插座的地方，方便當場開機測試、確認沒問題再付款。</p>
+        <p class="hint">為維持網站完全離線可用，本頁不嵌入任何地圖服務；需要地址或路線說明，請直接用 <span data-cfg="contactChannel">Facebook</span> 詢問。</p>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/svg.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
