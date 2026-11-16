@@ -537,6 +537,10 @@
     var feat = $('#featured-grid');
     if (feat) {
       var list = PRODUCTS.slice().sort(function (a, b) {
+        // 有貨的排前面，再依上架日期由新到舊
+        var aSold = a.stock <= 0 ? 1 : 0;
+        var bSold = b.stock <= 0 ? 1 : 0;
+        if (aSold !== bSold) { return aSold - bSold; }
         if (a.createdAt === b.createdAt) { return b.price - a.price; }
         return a.createdAt < b.createdAt ? 1 : -1;
       }).slice(0, 8);
@@ -710,6 +714,10 @@
 
     function sortList(list, sort) {
       return list.slice().sort(function (a, b) {
+        // 不論怎麼排序，已售出的一律沉到最後，把版面留給買得到的機器
+        var aSold = a.stock <= 0 ? 1 : 0;
+        var bSold = b.stock <= 0 ? 1 : 0;
+        if (aSold !== bSold) { return aSold - bSold; }
         if (sort === 'price-asc') { return a.price - b.price; }
         if (sort === 'price-desc') { return b.price - a.price; }
         if (a.createdAt === b.createdAt) { return b.price - a.price; }

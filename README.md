@@ -309,4 +309,9 @@ git push
 - 無任何外部連線：不載入 CDN、網路字型或外部圖片，離線也能完整運作。
 - 購物車存在瀏覽器的 `localStorage`，鍵值為 `kun3c_cart`；歷史訂單為 `kun3c_orders`。
 - 商品示意圖由 `js/svg.js` 的 `window.getProductSVG(kind)` 產生；商品的 `image` 欄位一旦填入路徑就會自動改用真實照片。
+- 分享預覽（貼到 Facebook／LINE 時顯示的圖卡）寫在每個 html 檔開頭的 `og:` 標籤，
+  圖片是 `images/share.jpg`（1200x630）。**網址或店名改變時，這幾行要一起改**，
+  七個檔案都有。商品頁因為是用 JavaScript 產生內容，Facebook 的爬蟲讀不到個別商品，
+  分享任何商品頁都會顯示同一張店家圖卡。
+- 已售出（`stock: 0`）的商品在任何排序下都會自動排到最後。
 - 聯絡管道由 `contactChannel` / `contactUrl` 決定：HTML 內文用 `<span data-cfg="contactChannel">` 取得名稱，按鈕文字用 `{管道}` 佔位字串，由 `js/app.js` 的 `channelLabel()` 置換。
