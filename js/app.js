@@ -205,14 +205,124 @@
 
   /* ---------------- 共用畫面片段 ---------------- */
 
-  // 商品圖：有填 image 欄位就用真實照片，否則自動畫 SVG 示意圖
+  // 取出商品的照片清單：支援 images 陣列（多張），也相容舊的 image 單張欄位
+  function photosOf(p) {
+    if (Array.isArray(p.images)) {
+      return p.images.filter(function (src) { return !!src; });
+    }
+    return p.image ? [p.image] : [];
+  }
+
+  // 商品圖：有照片就用真實照片的第一張，否則自動畫 SVG 示意圖
   function mediaHTML(p, size) {
     var cls = 'media media--' + size;
-    var label = esc(p.name) + (p.image ? '' : ' 示意圖');
-    var inner = p.image
-      ? '<img src="' + esc(p.image) + '" alt="" loading="lazy">'
+    var photos = photosOf(p);
+    var label = esc(p.name) + (photos.length ? '' : ' 示意圖');
+    var inner = photos.length
+      ? '<img src="' + esc(photos[0]) + '" alt="" loading="lazy">'
       : productSVG(p.svgKind);
     return '<div class="' + cls + '" role="img" aria-label="' + label + '">' + inner + '</div>';
+  }
+
+  // 商品詳情頁的照片相簿（大圖 ＋ 縮圖列）
+  function galleryHTML(p, photos) {
+    var thumbs = photos.map(function (src, i) {
+      return '<button class="gallery-thumb" type="button" data-photo="' + i + '"' +
+        (i === 0 ? ' aria-current="true"' : '') +
+        ' aria-label="第 ' + (i + 1) + ' 張照片"><img src="' + esc(src) +
+        '" alt="" loading="lazy"></button>';
+    }).join('');
+    return '<div class="gallery">' +
+      '<button class="gallery-main" type="button" id="gallery-main" aria-label="放大檢視商品照片">' +
+      '<img id="gallery-img" src="' + esc(photos[0]) + '" alt="' + esc(p.name) + ' 照片 1">' +
+      '</button>' +
+      (photos.length > 1
+        ? '<div class="gallery-thumbs" role="group" aria-label="' + esc(p.name) + ' 的照片">' +
+          thumbs + '</div>'
+        : '') +
+      '<p class="hint gallery-hint">' +
+      (photos.length > 1 ? '共 ' + photos.length + ' 張照片，' : '') +
+      '點照片可以放大看細節。</p></div>';
+  }
+
+  // 相簿互動：縮圖切換、點大圖放大檢視、鍵盤左右切換與 Esc 關閉
+  function initGallery(p, photos) {
+    var current = 0;
+    var mainBtn = $('#gallery-main');
+    var mainImg = $('#gallery-img');
+    var box = null;
+
+    function show(index) {
+      current = (index + photos.length) % photos.length;
+      var alt = p.name + ' 照片 ' + (current + 1);
+      mainImg.src = photos[current];
+      mainImg.alt = alt;
+      $$('.gallery-thumb').forEach(function (btn, i) {
+        if (i === current) { btn.setAttribute('aria-current', 'true'); }
+        else { btn.removeAttribute('aria-current'); }
+      });
+      if (box) {
+        $('#lightbox-img', box).src = photos[current];
+        $('#lightbox-img', box).alt = alt;
+        $('#lightbox-step', box).textContent = (current + 1) + ' / ' + photos.length;
+      }
+    }
+
+    function closeBox() {
+      if (!box) { return; }
+      document.body.removeChild(box);
+      document.body.style.overflow = '';
+      box = null;
+      mainBtn.focus();
+    }
+
+    function openBox() {
+      if (box) { return; }
+      box = document.createElement('div');
+      box.className = 'lightbox';
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-modal', 'true');
+      box.setAttribute('aria-label', p.name + ' 的照片');
+      box.innerHTML =
+        '<img id="lightbox-img" src="' + esc(photos[current]) + '" alt="' +
+          esc(p.name) + ' 照片 ' + (current + 1) + '">' +
+        '<p class="lightbox-step" id="lightbox-step">' + (current + 1) + ' / ' +
+          photos.length + '</p>' +
+        (photos.length > 1
+          ? '<button class="lightbox-nav lightbox-prev" type="button" aria-label="上一張照片">' +
+            icon('chevron-left') + '</button>' +
+            '<button class="lightbox-nav lightbox-next" type="button" aria-label="下一張照片">' +
+            icon('chevron-right') + '</button>'
+          : '') +
+        '<button class="lightbox-close" type="button" aria-label="關閉放大檢視">' +
+          icon('close') + '</button>';
+      document.body.appendChild(box);
+      document.body.style.overflow = 'hidden';
+      box.addEventListener('click', function (ev) {
+        if (ev.target.closest('.lightbox-prev')) { show(current - 1); }
+        else if (ev.target.closest('.lightbox-next')) { show(current + 1); }
+        else if (ev.target.closest('.lightbox-close') || ev.target === box) { closeBox(); }
+      });
+      $('.lightbox-close', box).focus();
+    }
+
+    mainBtn.addEventListener('click', openBox);
+
+    var thumbWrap = $('.gallery-thumbs');
+    if (thumbWrap) {
+      thumbWrap.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('[data-photo]');
+        if (btn) { show(Number(btn.getAttribute('data-photo'))); }
+      });
+    }
+
+    document.addEventListener('keydown', function (ev) {
+      if (box) {
+        if (ev.key === 'Escape') { closeBox(); }
+        else if (ev.key === 'ArrowLeft') { show(current - 1); }
+        else if (ev.key === 'ArrowRight') { show(current + 1); }
+      }
+    });
   }
 
   function condBadge(p) {
@@ -250,8 +360,13 @@
       ? '<button class="btn btn-block" type="button" disabled>已售出</button>'
       : '<button class="btn btn-primary btn-block" type="button" data-add="' + esc(p.id) + '">' +
         icon('cart') + '加入購物車</button>';
+    var photoCount = photosOf(p).length;
+    var countBadge = photoCount > 1
+      ? '<span class="photo-count">' + icon('camera') + photoCount + ' 張實拍</span>'
+      : '';
     return '<article class="card' + (sold ? ' is-sold' : '') + '">' +
            (sold ? '<span class="ribbon-sold">已售出</span>' : '') +
+      countBadge +
       mediaHTML(p, 'card') +
       '<div class="card-body">' +
         '<div class="tag-row">' + condBadge(p) + warrantyTag(p) + stockTag(p) + '</div>' +
@@ -822,9 +937,10 @@
       return '<span class="tag tag-accent">' + icon('check') + esc(h) + '</span>';
     }).join('');
 
+    var photos = photosOf(p);
     box.innerHTML =
       '<div class="detail-layout">' +
-        '<div>' + mediaHTML(p, 'big') + '</div>' +
+        '<div>' + (photos.length ? galleryHTML(p, photos) : mediaHTML(p, 'big')) + '</div>' +
         '<div>' +
           '<span class="card-brand">' + esc(p.brand) + '</span>' +
           '<h1 class="detail-title">' + esc(p.name) + '</h1>' +
@@ -864,6 +980,8 @@
         (p.notes ? '<div class="notes-box"><h3>誠實說明（請先看完再下單）</h3><p>' +
           esc(p.notes) + '</p></div>' : '') +
       '</div>';
+
+    if (photos.length) { initGallery(p, photos); }
 
     // 數量選擇器
     var qtyValue = $('#qty-value');

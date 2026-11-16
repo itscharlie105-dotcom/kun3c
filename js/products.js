@@ -75,7 +75,13 @@ window.PRODUCTS = [
     ],
     highlights: ['電池健康度 96%', '附原廠充電器', '記憶體可再加裝一條', '文書、追劇、線上課程都夠用'],
     notes: '二手整理機（非一手自用），已完成基本功能測試。上蓋與掌托有正常二手使用痕跡，詳細外觀以實拍照片為準。',
-    image: 'images/lap-06.jpg',
+    images: [
+      'images/lap-06-1.jpg',
+      'images/lap-06-2.jpg',
+      'images/lap-06-3.jpg',
+      'images/lap-06-4.jpg',
+      'images/lap-06-5.jpg'
+    ],
     svgKind: 'laptop',
     createdAt: '2026-11-16'
   },

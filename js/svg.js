@@ -215,7 +215,10 @@
     box: '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
     line: '<path d="M21 10.2C21 6.2 17 3 12 3S3 6.2 3 10.2c0 3.6 3.2 6.6 7.5 7.2.3.1.7.3.6.8l-.3 1.6c-.1.4.2.8.7.6 2.4-1 7.5-4.4 9-7.8.3-.7.5-1.5.5-2.2z"/>',
     facebook: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M16 7.5h-1.6A1.9 1.9 0 0 0 12.5 9.4V21"/><path d="M9.8 12.8h5"/>',
-    check: '<path d="M4 12.5l5 5L20 6"/>'
+    check: '<path d="M4 12.5l5 5L20 6"/>',
+    camera: '<path d="M3 7h3.5l1.5-2h8l1.5 2H21v12H3z"/><circle cx="12" cy="12.5" r="3.6"/>',
+    'chevron-left': '<path d="M15 5l-7 7 7 7"/>',
+    'chevron-right': '<path d="M9 5l7 7-7 7"/>'
   };
 
   /**

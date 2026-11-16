@@ -43,6 +43,8 @@
            2. 按「<strong>下載新的 products.js</strong>」<br>
            3. 把下載到的檔案，<strong>拖進網站資料夾的 <code>js</code> 資料夾蓋掉舊的</strong>，完成！</p>
         <p class="hint" style="margin-top:8px">這個工具只會在你電腦上產生檔案，不會自動改到網站。檔案換好後要記得上傳（README 第 6 節）。</p>
+        <p class="hint">有照片的話，<strong>先把照片檔案放進 <code>images</code> 資料夾</strong>再填表，
+          一台機器可以放很多張（外觀、螢幕、鍵盤、電池健康度截圖都很加分）。</p>
       </div>
 
       <!-- 新增商品表單 -->
@@ -107,9 +109,11 @@
           </div>
 
           <div class="field">
-            <label for="f-image">照片檔名（可留空）</label>
-            <input class="input" type="text" id="f-image" placeholder="例：lap-06.jpg">
-            <p class="hint">留空就用自動繪製的示意圖。有照片的話先放進 images 資料夾。</p>
+            <label for="f-image">照片檔名（可留空，一行一張）</label>
+            <textarea class="input" id="f-image" rows="4"
+                      placeholder="lap-06-1.jpg&#10;lap-06-2.jpg&#10;lap-06-3.jpg"></textarea>
+            <p class="hint">先把照片放進 <code>images</code> 資料夾，再把檔名一行一個填在這裡。
+              <strong>第一張會當成封面</strong>，客人可以點大圖放大看細節。留空就用自動繪製的示意圖。</p>
           </div>
 
           <div class="field field--full">
@@ -286,12 +290,24 @@
       .trim() + "'";
   }
 
+  // 取出照片清單：支援 images 陣列，也相容舊的 image 單張欄位
+  function photosOf(p) {
+    if (Array.isArray(p.images)) {
+      return p.images.filter(function (src) { return !!src; });
+    }
+    return p.image ? [p.image] : [];
+  }
+
   // 把一件商品轉成 products.js 裡的那一段文字
   function toCode(p) {
     var specs = (p.specs || []).map(function (s) {
       return '      { label: ' + q(s.label) + ', value: ' + q(s.value) + ' }';
     }).join(',\n');
     var highlights = (p.highlights || []).map(q).join(', ');
+    var photos = photosOf(p);
+    var photoCode = photos.length
+      ? '[\n' + photos.map(function (src) { return '      ' + q(src); }).join(',\n') + '\n    ]'
+      : '[]';
     return '  {\n' +
       '    id: ' + q(p.id) + ',\n' +
       '    name: ' + q(p.name) + ',\n' +
@@ -305,7 +321,7 @@
       '    specs: [\n' + specs + '\n    ],\n' +
       '    highlights: [' + highlights + '],\n' +
       '    notes: ' + q(p.notes) + ',\n' +
-      '    image: ' + (p.image ? q(p.image) : 'null') + ',\n' +
+      '    images: ' + photoCode + ',\n' +
       '    svgKind: ' + q(p.svgKind) + ',\n' +
       '    createdAt: ' + q(p.createdAt) + '\n' +
       '  }';
@@ -332,7 +348,7 @@
       '     specs        規格表\n' +
       '     highlights   賣點標籤\n' +
       '     notes        瑕疵誠實說明\n' +
-      '     image        照片路徑，填 null 就用示意圖\n' +
+      '     images       照片路徑陣列，可放多張；留成 [] 就用示意圖\n' +
       '     svgKind      示意圖樣式：laptop/desktop/tv/monitor/gpu/cpu/ram/ssd\n' +
       '     createdAt    上架日期，用於「最新上架」排序\n' +
       '   ===================================================================== */\n\n' +
@@ -385,7 +401,10 @@
         return t.trim();
       }).filter(Boolean),
       notes: $('#f-notes').value.trim(),
-      image: $('#f-image').value.trim() ? 'images/' + $('#f-image').value.trim().replace(/^images\//, '') : null,
+      images: $('#f-image').value.split('\n').map(function (line) {
+        var name = line.trim().replace(/^images\//, '');
+        return name ? 'images/' + name : '';
+      }).filter(Boolean),
       svgKind: KIND[category] || 'desktop',
       createdAt: today()
     };
