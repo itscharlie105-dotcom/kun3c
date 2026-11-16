@@ -37,6 +37,10 @@
         <p>填完表格按一下按鈕，就會幫你產生新的商品檔案，完全不用自己寫程式。</p>
       </div>
 
+      <p class="hint" style="margin-bottom:14px">
+        只想產生社團貼文？<a href="#post-tool">跳到「產生社團貼文」</a>。
+      </p>
+
       <div class="callout tool-note">
         <p><strong>怎麼用（三步驟）：</strong></p>
         <p>1. 填下面的表格 → 按「<strong>加入這件商品</strong>」（可以連續加好幾件）<br>
@@ -175,6 +179,61 @@
         </div>
       </section>
 
+      <!-- 產生社團貼文 -->
+      <section class="panel panel-pad" id="post-tool" style="margin-top:22px">
+        <h2 class="section-title" style="font-size:1.2rem">四、產生社團貼文</h2>
+        <p class="hint">勾商品 → 選貼文型式 → 按「複製貼文」，直接貼到 Facebook 社團就好。
+          貼文內容會自動從商品資料產生，格式統一、不會漏寫規格。</p>
+
+        <fieldset class="field" style="margin-top:16px">
+          <legend class="field-legend">貼文型式</legend>
+          <div class="radio-row">
+            <label class="radio-card">
+              <input type="radio" name="post-kind" value="single" checked>
+              <span>單台詳細介紹（勾 1 台）</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="post-kind" value="multi">
+              <span>多台上架公告（勾 2 台以上）</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="post-kind" value="intro">
+              <span>店家介紹（開張或久沒發文時用）</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="field" id="post-pick-wrap">
+          <span class="field-legend">要放進貼文的商品</span>
+          <div class="hero-actions" style="margin:8px 0">
+            <button class="btn btn-ghost btn-sm" type="button" id="post-pick-new">選最新 3 台</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="post-pick-none">清除勾選</button>
+          </div>
+          <div style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px">
+            <div id="post-list"></div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:12px">
+          <label class="check"><input type="checkbox" id="post-link" checked>
+            <span>附上網站連結</span></label>
+          <label class="check"><input type="checkbox" id="post-contact" checked>
+            <span>附上運送、保固與聯絡方式</span></label>
+        </div>
+
+        <label class="sr-only" for="post-text">貼文內容</label>
+        <textarea class="order-text" id="post-text" style="min-height:340px" readonly></textarea>
+        <div class="hero-actions" style="margin-top:14px">
+          <button class="btn btn-primary" type="button" id="copy-post">複製貼文</button>
+          <span class="ok-msg" id="post-msg" role="status"></span>
+        </div>
+
+        <div class="callout" style="margin-top:16px">
+          <p><strong>貼之前記得：</strong>先看社團規則，有些社團禁止貼外部連結，
+            那就把網址放在<strong>第一則留言</strong>。另外第一張照片請放實拍，不要放網站截圖。</p>
+        </div>
+      </section>
+
     </div>
   </div>
 </main>
@@ -191,6 +250,8 @@
    ===================================================================== */
 (function () {
   'use strict';
+
+  var CFG = window.SITE_CONFIG || {};
 
   // 工作用的商品清單：從現有的 window.PRODUCTS 複製一份
   var list = (window.PRODUCTS || []).map(function (p) { return p; });
@@ -411,6 +472,7 @@
 
     list.unshift(product);
     renderStock();
+    renderPicker();
     $('#add-msg').textContent = '✓ 已加入「' + product.name + '」（代號 ' + product.id + '）';
     $('#add-form').reset();
     buildSpecRows();
@@ -458,6 +520,240 @@
       done(fallback());
     }
   });
+
+  /* ---------- 產生社團貼文 ---------- */
+  var COND_NAME = {
+    'A+': 'A+ 近全新', 'A': 'A 良好',
+    'B': 'B 使用痕跡明顯', 'C': 'C 外觀瑕疵品'
+  };
+  var picked = {};
+
+  function money(n) { return 'NT$ ' + Number(n || 0).toLocaleString('zh-TW'); }
+
+  function siteUrl() {
+    var u = CFG.siteUrl || '';
+    return u && u.slice(-1) !== '/' ? u + '/' : u;
+  }
+
+  function aliveList() {
+    return list.filter(function (p) { return !removed[p.id]; });
+  }
+
+  function renderPicker() {
+    var items = aliveList();
+    $('#post-list').innerHTML = items.map(function (p) {
+      var sold = p.stock <= 0;
+      return '<label class="check"><input type="checkbox" data-pick="' + p.id + '"' +
+        (picked[p.id] ? ' checked' : '') + '>' +
+        '<span>' + p.name + (sold ? '（已售出）' : '') + '</span>' +
+        '<span class="check-count">' + money(p.price) + '</span></label>';
+    }).join('');
+  }
+
+  function pickedProducts() {
+    return aliveList().filter(function (p) { return picked[p.id]; });
+  }
+
+  function postKind() {
+    var r = document.querySelector('input[name="post-kind"]:checked');
+    return r ? r.value : 'single';
+  }
+
+  // 運送、保固與聯絡方式的共用段落
+  function footerLines() {
+    var lines = [];
+    var fee = Number(CFG.shippingFee || 0);
+    var free = Number(CFG.freeShippingThreshold || 0);
+    lines.push('🚚 全台宅配（運費 ' + fee + ' 元，滿 ' + free.toLocaleString('zh-TW') + ' 元免運）');
+    lines.push('🤝 汐止面交，當場開機驗機、滿意再付款');
+    lines.push('📞 ' + (CFG.phone || '') + '（' + (CFG.hours || '') + '）');
+    lines.push('💬 ' + (CFG.contactChannel || '訊息') + ' 私訊也可以' +
+      (CFG.contactNote ? '（' + CFG.contactNote + '）' : ''));
+    return lines;
+  }
+
+  // 單台詳細介紹
+  function singlePost(p, withLink, withContact) {
+    var out = [];
+    out.push('💻 ' + p.name);
+    out.push('');
+    out.push('【規格】');
+    (p.specs || []).forEach(function (s2) {
+      out.push('・' + s2.label + '：' + s2.value);
+    });
+    if ((p.highlights || []).length) {
+      out.push('');
+      out.push('【重點】');
+      (p.highlights || []).forEach(function (h) { out.push('・' + h); });
+    }
+    if (p.notes) {
+      out.push('');
+      out.push('【誠實說明】');
+      out.push(p.notes);
+    }
+    out.push('');
+    out.push('💰 售價：' + money(p.price) +
+      (p.originalPrice ? '（原價 ' + money(p.originalPrice) + '）' : ''));
+    out.push('🔎 成色：' + (COND_NAME[p.condition] || p.condition));
+    out.push('🛡 保固：' + (p.warrantyDays > 0 ? p.warrantyDays + ' 天店家保固' : '本件無保固'));
+    out.push('📦 庫存：' + (p.stock > 0 ? '尚有 ' + p.stock + ' 件' : '已售出'));
+    if (withLink && siteUrl()) {
+      out.push('');
+      out.push('📷 實拍照片與完整規格：');
+      out.push(siteUrl() + 'product.html?id=' + p.id);
+    }
+    if (withContact) {
+      out.push('');
+      footerLines().forEach(function (l) { out.push(l); });
+    }
+    out.push('');
+    out.push('有興趣留言或私訊 🙋');
+    return out.join('\n');
+  }
+
+  // 多台上架公告
+  function multiPost(items, withLink, withContact) {
+    var out = [];
+    out.push('【新上架 ' + items.length + ' 台】' + (CFG.storeName || ''));
+    out.push('');
+    items.forEach(function (p) {
+      out.push('・' + p.name + '　' + money(p.price));
+      // 多台貼文求精簡：拿掉規格裡括號內的補充說明
+      var brief = (p.specs || []).slice(0, 3).map(function (s2) {
+        return String(s2.value).replace(/（[^）]*）/g, '').replace(/\([^)]*\)/g, '').trim();
+      }).filter(Boolean).join('／');
+      var tail = '成色 ' + (COND_NAME[p.condition] || p.condition) +
+        '｜' + (p.warrantyDays > 0 ? '保固 ' + p.warrantyDays + ' 天' : '無保固');
+      out.push('　　' + (brief ? brief + '｜' : '') + tail);
+    });
+    out.push('');
+    out.push('每一台都實機檢測過，外觀刮痕與電池狀況都誠實寫在商品頁上。');
+    if (withLink && siteUrl()) {
+      out.push('');
+      out.push('📷 實拍照片與完整規格都在這裡：');
+      out.push(siteUrl());
+    }
+    if (withContact) {
+      out.push('');
+      footerLines().forEach(function (l) { out.push(l); });
+    }
+    out.push('');
+    out.push('有興趣留言或私訊 🙋');
+    return out.join('\n');
+  }
+
+  // 店家介紹
+  function introPost(withLink, withContact) {
+    var out = [];
+    out.push('【' + (CFG.storeName || '') + '】' + (CFG.slogan || ''));
+    out.push('');
+    out.push('我爸在汐止修了二十幾年電腦，這幾年在社團賣二手機，謝謝大家一直以來的照顧 🙏');
+    out.push('');
+    out.push('為了讓大家不用一直往前翻貼文，我把所有機器整理成一個網站：');
+    out.push('・一次看完全部庫存，筆電／桌機／電視螢幕／零組件分好類');
+    out.push('・可以直接篩預算、成色、有沒有保固');
+    out.push('・每台都有完整規格與實拍照片');
+    out.push('・賣掉的會自動標示「已售出」，不用再問還有沒有');
+    out.push('');
+    out.push('最重要的是成色這件事：我們把外觀分成 A+／A／B／C 四級，標準公開在網站上，');
+    out.push('每台有幾道刮痕、電池剩多少，都寫在「誠實說明」裡，不會只挑好聽的講。');
+    var n = aliveList().filter(function (p) { return p.stock > 0; }).length;
+    out.push('');
+    out.push('目前站上有 ' + n + ' 台機器可以挑。');
+    if (withLink && siteUrl()) {
+      out.push(siteUrl());
+    }
+    if (withContact) {
+      out.push('');
+      footerLines().forEach(function (l) { out.push(l); });
+    }
+    out.push('');
+    out.push('有想找的機型也可以留言，有收到會第一時間通知你 🙋');
+    return out.join('\n');
+  }
+
+  function buildPost() {
+    var kind = postKind();
+    var withLink = $('#post-link').checked;
+    var withContact = $('#post-contact').checked;
+    var items = pickedProducts();
+    if (kind === 'intro') { return introPost(withLink, withContact); }
+    if (!items.length) {
+      return '（請先在上面勾選要放進貼文的商品）';
+    }
+    if (kind === 'single') {
+      return singlePost(items[0], withLink, withContact) +
+        (items.length > 1 ? '\n\n※ 單台貼文只會用勾選的第一台，其餘忽略。' : '');
+    }
+    return multiPost(items, withLink, withContact);
+  }
+
+  function refreshPost() {
+    $('#post-text').value = buildPost();
+  }
+
+  $('#post-list').addEventListener('change', function (ev) {
+    var el = ev.target;
+    if (el.hasAttribute('data-pick')) {
+      var id = el.getAttribute('data-pick');
+      if (el.checked) { picked[id] = true; } else { delete picked[id]; }
+      refreshPost();
+    }
+  });
+
+  $('#post-pick-new').addEventListener('click', function () {
+    picked = {};
+    aliveList().filter(function (p) { return p.stock > 0; })
+      .sort(function (a, b) { return a.createdAt < b.createdAt ? 1 : -1; })
+      .slice(0, 3).forEach(function (p) { picked[p.id] = true; });
+    renderPicker();
+    refreshPost();
+  });
+
+  $('#post-pick-none').addEventListener('click', function () {
+    picked = {};
+    renderPicker();
+    refreshPost();
+  });
+
+  Array.prototype.slice.call(document.querySelectorAll('input[name="post-kind"]')).forEach(function (el) {
+    el.addEventListener('change', function () {
+      $('#post-pick-wrap').style.display = postKind() === 'intro' ? 'none' : '';
+      refreshPost();
+    });
+  });
+  $('#post-link').addEventListener('change', refreshPost);
+  $('#post-contact').addEventListener('change', refreshPost);
+
+  $('#copy-post').addEventListener('click', function () {
+    var ta = $('#post-text');
+    var text = ta.value;
+    function done(good) {
+      $('#post-msg').textContent = good
+        ? '✓ 已複製，可以直接貼到社團了'
+        : '複製失敗，請在上面的文字框全選後自己複製';
+      window.setTimeout(function () { $('#post-msg').textContent = ''; }, 5000);
+    }
+    // 備援：直接選取文字框內容再複製，瀏覽器擋掉剪貼簿 API 時也能用
+    function fallback() {
+      ta.removeAttribute('readonly');
+      ta.focus();
+      ta.setSelectionRange(0, text.length);
+      var good = false;
+      try { good = document.execCommand('copy'); } catch (e) { good = false; }
+      ta.setAttribute('readonly', '');
+      return good;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); },
+        function () { done(fallback()); });
+    } else {
+      done(fallback());
+    }
+  });
+
+  renderPicker();
+  refreshPost();
 
   $('#download-btn').addEventListener('click', function () {
     var blob = new Blob([buildFile()], { type: 'text/javascript;charset=utf-8' });

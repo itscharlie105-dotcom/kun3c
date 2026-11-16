@@ -17,6 +17,10 @@ window.SITE_CONFIG = {
   // 主標語：首頁大標題
   slogan: '嚴選中古3C',
 
+  // 網站網址：產生社團貼文時會附在文末（結尾要有斜線）
+  // 以後換成自己的網域，改這一行就好
+  siteUrl: 'https://itscharlie105-dotcom.github.io/kun3c/',
+
   // 副標語：首頁大標題下方的一句話說明
   subSlogan: '每一台都實機檢測、誠實標示成色，最高 30 天保固，全台宅配或汐止面交。',
 
