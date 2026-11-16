@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>新增商品工具（老闆專用）</title>
+<meta name="description" content="填表就能新增商品，自動產生新的 products.js 檔案，不用自己寫程式。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%230B0F14'/%3E%3Crect%20x='6'%20y='9'%20width='20'%20height='13'%20rx='2'%20fill='none'%20stroke='%2322D3EE'%20stroke-width='2'/%3E%3Cpath%20d='M12%2026h8'%20stroke='%2322D3EE'%20stroke-width='2'%20stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* 這個工具頁專用的幾個小樣式 */
+  .tool-note { border-left: 4px solid var(--accent); }
+  .spec-rows { display: grid; gap: 10px; }
+  .spec-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+  .stock-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  .stock-table th, .stock-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .stock-table th { color: var(--text-dim); font-weight: 600; }
+  .stock-table input[type="number"] { width: 76px; padding: 5px 8px; }
+  .stock-table td:last-child, .stock-table th:last-child { text-align: center; }
+  .out-box { margin-top: 18px; }
+  .ok-msg { color: var(--ok); font-weight: 600; }
+  @media (max-width: 480px) {
+    .spec-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-title="新增商品工具" data-page="tool">
+<a class="sr-only" href="#main">跳到主要內容</a>
+<header class="site-header" id="site-header"></header>
+
+<main id="main">
+  <div class="wrap">
+    <div class="section">
+
+      <div class="section-head">
+        <h1 class="section-title">新增商品工具</h1>
+        <p>填完表格按一下按鈕，就會幫你產生新的商品檔案，完全不用自己寫程式。</p>
+      </div>
+
+      <div class="callout tool-note">
+        <p><strong>怎麼用（三步驟）：</strong></p>
+        <p>1. 填下面的表格 → 按「<strong>加入這件商品</strong>」（可以連續加好幾件）<br>
+           2. 按「<strong>下載新的 products.js</strong>」<br>
+           3. 把下載到的檔案，<strong>拖進網站資料夾的 <code>js</code> 資料夾蓋掉舊的</strong>，完成！</p>
+        <p class="hint" style="margin-top:8px">這個工具只會在你電腦上產生檔案，不會自動改到網站。檔案換好後要記得上傳（README 第 6 節）。</p>
+      </div>
+
+      <!-- 新增商品表單 -->
+      <form class="panel panel-pad" id="add-form" novalidate style="margin-top:22px">
+        <h2 class="section-title" style="font-size:1.2rem">一、填商品資料</h2>
+
+        <div class="form-grid">
+          <div class="field field--full">
+            <label for="f-name">商品名稱 <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" type="text" id="f-name" placeholder="例：ThinkPad X390 商務筆電" data-rules="required" aria-describedby="err-f-name">
+            <p class="field-error" id="err-f-name" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="f-category">分類 <span class="req" aria-hidden="true">*</span></label>
+            <select class="input" id="f-category">
+              <option value="laptop">筆記型電腦</option>
+              <option value="desktop">桌上型主機</option>
+              <option value="tv">電視與顯示器</option>
+              <option value="parts">零組件與周邊</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="f-brand">品牌 <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" type="text" id="f-brand" placeholder="例：Lenovo、自組" data-rules="required" aria-describedby="err-f-brand">
+            <p class="field-error" id="err-f-brand" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="f-price">售價（數字） <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" type="number" id="f-price" min="0" step="100" inputmode="numeric" placeholder="8900" data-rules="required" aria-describedby="err-f-price">
+            <p class="field-error" id="err-f-price" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="f-original">原價（可留空）</label>
+            <input class="input" type="number" id="f-original" min="0" step="100" inputmode="numeric" placeholder="26800">
+            <p class="hint">填了會顯示刪除線與折扣％，不想顯示就留空。</p>
+          </div>
+
+          <div class="field">
+            <label for="f-condition">成色 <span class="req" aria-hidden="true">*</span></label>
+            <select class="input" id="f-condition">
+              <option value="A+">A+　近全新（幾乎無使用痕跡）</option>
+              <option value="A" selected>A　良好（輕微痕跡）</option>
+              <option value="B">B　使用痕跡明顯（有刮痕掉漆）</option>
+              <option value="C">C　外觀瑕疵品（明顯損傷）</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="f-warranty">保固天數</label>
+            <input class="input" type="number" id="f-warranty" min="0" step="1" inputmode="numeric" value="30">
+            <p class="hint">沒有保固就填 0。</p>
+          </div>
+
+          <div class="field">
+            <label for="f-stock">庫存數量</label>
+            <input class="input" type="number" id="f-stock" min="0" step="1" inputmode="numeric" value="1">
+            <p class="hint">填 0 會自動顯示「已售出」。</p>
+          </div>
+
+          <div class="field">
+            <label for="f-image">照片檔名（可留空）</label>
+            <input class="input" type="text" id="f-image" placeholder="例：lap-06.jpg">
+            <p class="hint">留空就用自動繪製的示意圖。有照片的話先放進 images 資料夾。</p>
+          </div>
+
+          <div class="field field--full">
+            <span class="field-legend">規格（最多 6 列，不用填滿）</span>
+            <div class="spec-rows" id="spec-rows"></div>
+          </div>
+
+          <div class="field field--full">
+            <label for="f-highlights">賣點（一行一個，可留空）</label>
+            <textarea class="input" id="f-highlights" placeholder="電池健康度 89%&#10;已換新鍵盤膜&#10;附原廠變壓器"></textarea>
+          </div>
+
+          <div class="field field--full">
+            <label for="f-notes">瑕疵誠實說明（可留空）</label>
+            <textarea class="input" id="f-notes" placeholder="例：C 面有兩道細微使用痕跡，不影響操作。"></textarea>
+            <p class="hint">寫清楚缺點，商品頁會用琥珀色區塊強調，可以大幅減少客訴。</p>
+          </div>
+        </div>
+
+        <div class="hero-actions" style="margin-top:18px">
+          <button class="btn btn-primary" type="submit">加入這件商品</button>
+          <button class="btn btn-ghost" type="button" id="reset-form">清空表格</button>
+          <span class="ok-msg" id="add-msg" role="status"></span>
+        </div>
+      </form>
+
+      <!-- 現有商品 -->
+      <section class="panel panel-pad" style="margin-top:22px">
+        <h2 class="section-title" style="font-size:1.2rem">二、現有商品（可以直接改庫存或刪除）</h2>
+        <p class="hint">賣掉了就把庫存改成 <strong>0</strong>，商品會變灰色「已售出」但仍留在網站上；要整筆拿掉就勾「刪除」。</p>
+        <div style="overflow-x:auto">
+          <table class="stock-table">
+            <caption class="sr-only">現有商品庫存與刪除</caption>
+            <thead>
+              <tr><th>商品名稱</th><th>代號</th><th>售價</th><th>庫存</th><th>刪除</th></tr>
+            </thead>
+            <tbody id="stock-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 產生檔案 -->
+      <section class="panel panel-pad" style="margin-top:22px">
+        <h2 class="section-title" style="font-size:1.2rem">三、產生檔案</h2>
+        <p id="summary" class="hint"></p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" type="button" id="download-btn">下載新的 products.js</button>
+          <button class="btn btn-ghost" type="button" id="copy-btn">複製整份內容</button>
+          <button class="btn btn-ghost" type="button" id="preview-btn">看一下內容</button>
+        </div>
+        <div class="out-box" id="out-box" hidden>
+          <label class="sr-only" for="out-text">products.js 內容</label>
+          <textarea class="order-text" id="out-text" readonly></textarea>
+        </div>
+        <div class="callout" style="margin-top:16px">
+          <p><strong>下載完要做什麼？</strong>把下載到的 <code>products.js</code> 拖到網站資料夾裡的
+            <code>js</code> 資料夾，出現「要取代嗎？」選<strong>取代</strong>。
+            然後雙擊 <code>index.html</code> 確認商品有出現，最後再上傳到網路上。</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/svg.js"></script>
+<script src="js/app.js"></script>
+<script>
+/* =====================================================================
+   新增商品工具：把表單內容轉成 products.js 的文字檔
+   這一頁不影響網站本身，只是幫忙產生檔案。
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  // 工作用的商品清單：從現有的 window.PRODUCTS 複製一份
+  var list = (window.PRODUCTS || []).map(function (p) { return p; });
+  var removed = {};          // 被勾選刪除的商品代號
+  var SPEC_ROWS = 6;         // 規格列數
+
+  function $(sel) { return document.querySelector(sel); }
+  function esc(v) { return String(v == null ? '' : v); }
+
+  // 今天的日期（YYYY-MM-DD）
+  function today() {
+    var d = new Date();
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  // 依分類自動想一個沒用過的商品代號
+  var PREFIX = { laptop: 'lap', desktop: 'pc', tv: 'tv', parts: 'part' };
+  function nextId(category) {
+    var prefix = PREFIX[category] || 'item';
+    var used = {};
+    list.forEach(function (p) { used[p.id] = true; });
+    for (var i = 1; i < 999; i++) {
+      var id = prefix + '-' + (i < 10 ? '0' : '') + i;
+      if (!used[id]) { return id; }
+    }
+    return prefix + '-' + Date.now();
+  }
+
+  // 依分類給一個預設的示意圖樣式
+  var KIND = { laptop: 'laptop', desktop: 'desktop', tv: 'tv', parts: 'gpu' };
+
+  // 產生規格輸入列
+  function buildSpecRows() {
+    var html = '';
+    for (var i = 0; i < SPEC_ROWS; i++) {
+      html += '<div class="spec-row">' +
+        '<label class="sr-only" for="spec-label-' + i + '">規格 ' + (i + 1) + ' 項目</label>' +
+        '<input class="input" type="text" id="spec-label-' + i + '" placeholder="項目，例如 CPU">' +
+        '<label class="sr-only" for="spec-value-' + i + '">規格 ' + (i + 1) + ' 內容</label>' +
+        '<input class="input" type="text" id="spec-value-' + i + '" placeholder="內容，例如 Intel i5-8265U">' +
+        '</div>';
+    }
+    $('#spec-rows').innerHTML = html;
+  }
+
+  // 現有商品表格
+  function renderStock() {
+    $('#stock-body').innerHTML = list.map(function (p) {
+      var gone = removed[p.id];
+      return '<tr' + (gone ? ' style="opacity:.45"' : '') + '>' +
+        '<td>' + esc(p.name) + '</td>' +
+        '<td>' + esc(p.id) + '</td>' +
+        '<td>NT$ ' + Number(p.price || 0).toLocaleString('zh-TW') + '</td>' +
+        '<td><label class="sr-only" for="stock-' + p.id + '">' + esc(p.name) + ' 庫存</label>' +
+        '<input class="input" type="number" min="0" step="1" id="stock-' + p.id +
+        '" value="' + Number(p.stock || 0) + '" data-stock="' + esc(p.id) + '"></td>' +
+        '<td><label class="sr-only" for="del-' + p.id + '">刪除 ' + esc(p.name) + '</label>' +
+        '<input type="checkbox" id="del-' + p.id + '" data-del="' + esc(p.id) +
+        '"' + (gone ? ' checked' : '') + '></td>' +
+        '</tr>';
+    }).join('');
+    updateSummary();
+  }
+
+  function updateSummary() {
+    var keep = list.filter(function (p) { return !removed[p.id]; }).length;
+    $('#summary').textContent = '目前共 ' + keep + ' 件商品會寫進檔案' +
+      (Object.keys(removed).length ? '（已勾選刪除 ' + Object.keys(removed).length + ' 件）' : '') + '。';
+  }
+
+  $('#stock-body').addEventListener('input', function (ev) {
+    var el = ev.target;
+    if (el.hasAttribute('data-stock')) {
+      var id = el.getAttribute('data-stock');
+      list.forEach(function (p) {
+        if (p.id === id) { p.stock = Math.max(0, parseInt(el.value, 10) || 0); }
+      });
+    }
+  });
+
+  $('#stock-body').addEventListener('change', function (ev) {
+    var el = ev.target;
+    if (el.hasAttribute('data-del')) {
+      var id = el.getAttribute('data-del');
+      if (el.checked) { removed[id] = true; } else { delete removed[id]; }
+      renderStock();
+    }
+  });
+
+  // 把一段文字變成安全的 JS 字串
+  function q(text) {
+    return "'" + String(text == null ? '' : text)
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/[\r\n]+/g, ' ')
+      .trim() + "'";
+  }
+
+  // 把一件商品轉成 products.js 裡的那一段文字
+  function toCode(p) {
+    var specs = (p.specs || []).map(function (s) {
+      return '      { label: ' + q(s.label) + ', value: ' + q(s.value) + ' }';
+    }).join(',\n');
+    var highlights = (p.highlights || []).map(q).join(', ');
+    return '  {\n' +
+      '    id: ' + q(p.id) + ',\n' +
+      '    name: ' + q(p.name) + ',\n' +
+      '    category: ' + q(p.category) + ',\n' +
+      '    brand: ' + q(p.brand) + ',\n' +
+      '    price: ' + (Number(p.price) || 0) + ',\n' +
+      '    originalPrice: ' + (p.originalPrice ? Number(p.originalPrice) : 'null') + ',\n' +
+      '    condition: ' + q(p.condition) + ',\n' +
+      '    warrantyDays: ' + (Number(p.warrantyDays) || 0) + ',\n' +
+      '    stock: ' + (Number(p.stock) || 0) + ',\n' +
+      '    specs: [\n' + specs + '\n    ],\n' +
+      '    highlights: [' + highlights + '],\n' +
+      '    notes: ' + q(p.notes) + ',\n' +
+      '    image: ' + (p.image ? q(p.image) : 'null') + ',\n' +
+      '    svgKind: ' + q(p.svgKind) + ',\n' +
+      '    createdAt: ' + q(p.createdAt) + '\n' +
+      '  }';
+  }
+
+  // 組出完整的 products.js 內容
+  function buildFile() {
+    var keep = list.filter(function (p) { return !removed[p.id]; });
+    return '/* =====================================================================\n' +
+      '   products.js ─ 商品資料檔\n' +
+      '   ---------------------------------------------------------------------\n' +
+      '   這個檔案是用「新增商品工具.html」自動產生的（' + today() + '）。\n' +
+      '   要新增、修改商品，最簡單的方法就是再打開那個工具填表、重新下載一次。\n' +
+      '   也可以直接在這裡手動修改，欄位意思如下：\n' +
+      '     id           唯一代號，不可重複\n' +
+      '     name         商品名稱\n' +
+      '     category     分類：laptop 筆電／desktop 桌機／tv 電視螢幕／parts 零組件\n' +
+      '     brand        品牌\n' +
+      '     price        售價（整數）\n' +
+      '     originalPrice 原價，不想顯示就填 null\n' +
+      "     condition    成色：'A+' / 'A' / 'B' / 'C'\n" +
+      '     warrantyDays 保固天數，0 表示無保固\n' +
+      '     stock        庫存，0 會顯示「已售出」\n' +
+      '     specs        規格表\n' +
+      '     highlights   賣點標籤\n' +
+      '     notes        瑕疵誠實說明\n' +
+      '     image        照片路徑，填 null 就用示意圖\n' +
+      '     svgKind      示意圖樣式：laptop/desktop/tv/monitor/gpu/cpu/ram/ssd\n' +
+      '     createdAt    上架日期，用於「最新上架」排序\n' +
+      '   ===================================================================== */\n\n' +
+      'window.PRODUCTS = [\n\n' +
+      keep.map(toCode).join(',\n\n') +
+      '\n];\n';
+  }
+
+  /* ---------- 新增商品 ---------- */
+  buildSpecRows();
+  renderStock();
+
+  $('#add-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+
+    var fields = [['#f-name', '商品名稱'], ['#f-brand', '品牌'], ['#f-price', '售價']];
+    var ok = true, first = null;
+    fields.forEach(function (pair) {
+      var el = $(pair[0]);
+      var box = document.getElementById('err-' + el.id);
+      var bad = !String(el.value).trim();
+      if (pair[0] === '#f-price' && !bad && !(Number(el.value) >= 0)) { bad = true; }
+      box.textContent = bad ? '請填寫' + pair[1] + '。' : '';
+      if (bad) { el.classList.add('is-invalid'); ok = false; if (!first) { first = el; } }
+      else { el.classList.remove('is-invalid'); }
+    });
+    if (!ok) { first.focus(); return; }
+
+    var specs = [];
+    for (var i = 0; i < SPEC_ROWS; i++) {
+      var label = $('#spec-label-' + i).value.trim();
+      var value = $('#spec-value-' + i).value.trim();
+      if (label && value) { specs.push({ label: label, value: value }); }
+    }
+    if (!specs.length) { specs.push({ label: '規格', value: '詳見商品說明' }); }
+
+    var category = $('#f-category').value;
+    var product = {
+      id: nextId(category),
+      name: $('#f-name').value.trim(),
+      category: category,
+      brand: $('#f-brand').value.trim(),
+      price: Number($('#f-price').value) || 0,
+      originalPrice: $('#f-original').value ? Number($('#f-original').value) : null,
+      condition: $('#f-condition').value,
+      warrantyDays: Number($('#f-warranty').value) || 0,
+      stock: Number($('#f-stock').value) || 0,
+      specs: specs,
+      highlights: $('#f-highlights').value.split('\n').map(function (t) {
+        return t.trim();
+      }).filter(Boolean),
+      notes: $('#f-notes').value.trim(),
+      image: $('#f-image').value.trim() ? 'images/' + $('#f-image').value.trim().replace(/^images\//, '') : null,
+      svgKind: KIND[category] || 'desktop',
+      createdAt: today()
+    };
+
+    list.unshift(product);
+    renderStock();
+    $('#add-msg').textContent = '✓ 已加入「' + product.name + '」（代號 ' + product.id + '）';
+    $('#add-form').reset();
+    buildSpecRows();
+    $('#f-name').focus();
+    window.setTimeout(function () { $('#add-msg').textContent = ''; }, 6000);
+  });
+
+  $('#reset-form').addEventListener('click', function () {
+    $('#add-form').reset();
+    buildSpecRows();
+    $('#add-msg').textContent = '';
+  });
+
+  /* ---------- 產生檔案 ---------- */
+  $('#preview-btn').addEventListener('click', function () {
+    var box = $('#out-box');
+    $('#out-text').value = buildFile();
+    box.removeAttribute('hidden');
+    box.scrollIntoView({ block: 'nearest' });
+  });
+
+  $('#copy-btn').addEventListener('click', function () {
+    var text = buildFile();
+    var btn = $('#copy-btn');
+    var done = function (good) {
+      btn.textContent = good ? '已複製 ✓' : '請改用「看一下內容」手動複製';
+      window.setTimeout(function () { btn.textContent = '複製整份內容'; }, 2500);
+    };
+    var fallback = function () {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var good = false;
+      try { good = document.execCommand('copy'); } catch (e) { good = false; }
+      document.body.removeChild(ta);
+      return good;
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); },
+        function () { done(fallback()); });
+    } else {
+      done(fallback());
+    }
+  });
+
+  $('#download-btn').addEventListener('click', function () {
+    var blob = new Blob([buildFile()], { type: 'text/javascript;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'products.js';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    var btn = $('#download-btn');
+    btn.textContent = '已下載 ✓ 請拖進 js 資料夾';
+    window.setTimeout(function () { btn.textContent = '下載新的 products.js'; }, 4000);
+  });
+})();
+</script>
+</body>
+</html>
