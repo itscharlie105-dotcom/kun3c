@@ -421,7 +421,7 @@
     btn.setAttribute('data-label', original);
     function done(ok) {
       btn.innerHTML = icon(ok ? 'check' : 'copy') + (ok ? '已複製 ✓' : '請手動選取複製');
-      window.setTimeout(function () { btn.innerHTML = icon('copy') + original; }, 2000);
+      window.setTimeout(function () { btn.innerHTML = icon('copy') + esc(original); }, 2000);
     }
     function fallback() {
       var ta = document.createElement('textarea');
@@ -1111,10 +1111,13 @@
       tools.removeAttribute('hidden');
       $('#orders-count').textContent = '共 ' + list.length + ' 筆訂單紀錄';
       box.innerHTML = list.map(function (o, i) {
-        var qty = (o.items || []).reduce(function (n, it) { return n + it.qty; }, 0);
+        var qty = (o.items || []).reduce(function (n, it) {
+          return n + (Number(it.qty) || 0);
+        }, 0);
         var when = o.createdAt ? formatDateTime(new Date(o.createdAt)) : '';
         var items = (o.items || []).map(function (it) {
-          return '<li>' + esc(it.name) + ' x' + it.qty + '　' + money(it.subtotal) + '</li>';
+          return '<li>' + esc(it.name) + ' x' + (Number(it.qty) || 0) + '　' +
+            money(it.subtotal) + '</li>';
         }).join('');
         return '<article class="panel panel-pad order-card">' +
           '<header class="order-card-head">' +
