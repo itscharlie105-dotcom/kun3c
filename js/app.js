@@ -397,7 +397,7 @@
     });
     $$('[data-cfg]', root).forEach(function (el) {
       var key = el.getAttribute('data-cfg');
-      if (CFG[key] != null) { el.textContent = CFG[key]; }
+      if (CFG[key] != null) { el.textContent = channelLabel(CFG[key]); }
     });
     $$('[data-cfg-tel]', root).forEach(function (el) {
       el.href = 'tel:' + String(CFG.phone || '').replace(/[^0-9+]/g, '');

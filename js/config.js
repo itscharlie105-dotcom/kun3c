@@ -52,7 +52,7 @@ window.SITE_CONFIG = {
   hours: '每日 10:00–21:00',
 
   // 面交地點說明：顯示在購物須知與聯絡頁
-  meetupArea: '汐止（確切地點與時間請私訊約定）',
+  meetupArea: '汐止（確切地點與時間請用 {管道} 訊息約定）',
 
   // 宅配運費（新台幣整數）
   shippingFee: 160,

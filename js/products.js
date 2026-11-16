@@ -53,6 +53,33 @@
 
 window.PRODUCTS = [
 
+  /* ===== 真實商品（由實拍照片與規格建立） ===== */
+  {
+    id: 'lap-06',
+    name: 'ASUS VivoBook 15 X507MA 文書筆電',
+    category: 'laptop',
+    brand: 'ASUS',
+    price: 3500,
+    originalPrice: null,
+    condition: 'A',
+    warrantyDays: 30,
+    stock: 1,
+    specs: [
+      { label: 'CPU', value: 'Intel Celeron N4000 1.10GHz（2核心 2執行緒）' },
+      { label: '記憶體', value: '8GB DDR4 2400MHz（尚有一個空插槽可加裝）' },
+      { label: '硬碟', value: '240GB SSD（系統顯示約 224GB）' },
+      { label: '螢幕', value: '15.6吋' },
+      { label: '顯示晶片', value: 'Intel UHD Graphics 600' },
+      { label: '作業系統', value: 'Windows 10 家用版' },
+      { label: '電池健康度', value: '約 96%（31,968 / 33,156 mWh）' }
+    ],
+    highlights: ['電池健康度 96%', '附原廠充電器', '記憶體可再加裝一條', '文書、追劇、線上課程都夠用'],
+    notes: '二手整理機（非一手自用），已完成基本功能測試。上蓋與掌托有正常二手使用痕跡，詳細外觀以實拍照片為準。',
+    image: 'images/lap-06.jpg',
+    svgKind: 'laptop',
+    createdAt: '2026-11-16'
+  },
+
   /* ===== 筆記型電腦 ===== */
   {
     // 唯一代號，不可重複
