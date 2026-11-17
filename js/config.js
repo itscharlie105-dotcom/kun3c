@@ -49,6 +49,9 @@ window.SITE_CONFIG = {
   // Email：點擊可直接開啟郵件軟體
   email: 'itscharlie105@gmail.com',
 
+  // 檢測人員：顯示在每台機器的檢測報告上
+  inspector: '店長阿坤',
+
   // 取貨方式：顯示在信任條與頁尾
   delivery: '全台宅配 ＋ 汐止面交',
 

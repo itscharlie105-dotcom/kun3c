@@ -205,6 +205,50 @@
 
   /* ---------------- 共用畫面片段 ---------------- */
 
+  // 取得逐台檢測報告（inspect.js 提供）
+  function inspectionOf(p) {
+    return typeof window.getInspection === 'function'
+      ? window.getInspection(p)
+      : { has: false };
+  }
+
+  // 檢測報告區塊：沒有填檢測資料的商品就不顯示
+  function inspectPanelHTML(p) {
+    var rep = inspectionOf(p);
+    if (!rep.has) { return ''; }
+    var MARK = {
+      pass: '<span class="ins-mark is-pass" aria-hidden="true">✓</span>',
+      note: '<span class="ins-mark is-note" aria-hidden="true">!</span>',
+      none: '<span class="ins-mark is-none" aria-hidden="true">–</span>'
+    };
+    var LABEL = { pass: '通過', note: '注意', none: '未檢測' };
+    var rows = rep.rows.map(function (r) {
+      return '<li class="ins-row is-' + r.status + '">' +
+        MARK[r.status] +
+        '<span class="ins-label">' + esc(r.label) +
+        '<small>' + esc(r.hint) + '</small></span>' +
+        '<span class="ins-result"><span class="sr-only">' + LABEL[r.status] + '：</span>' +
+        esc(r.text) + '</span></li>';
+    }).join('');
+
+    var counts = [];
+    if (rep.summary.pass) { counts.push(rep.summary.pass + ' 項通過'); }
+    if (rep.summary.note) { counts.push(rep.summary.note + ' 項註記'); }
+    if (rep.summary.none) { counts.push(rep.summary.none + ' 項未檢測'); }
+
+    return '<section class="panel panel-pad ins-panel">' +
+      '<div class="ins-head">' +
+        '<h2 class="section-title" style="font-size:1.2rem;margin:0">這台我們檢查了什麼</h2>' +
+        (rep.date ? '<span class="ins-date">檢測日期 ' + esc(rep.date) +
+          (CFG.inspector ? '　檢測人員 ' + esc(CFG.inspector) : '') + '</span>' : '') +
+      '</div>' +
+      '<p class="ins-summary">' + esc(counts.join('、')) + '</p>' +
+      '<ul class="ins-list">' + rows + '</ul>' +
+      '<p class="hint ins-note">這是<strong>這一台</strong>實際的檢測紀錄，不是通用的流程說明。' +
+      '沒有做到的項目我們就寫未檢測，不會先打勾。想看哪一項的實拍或數據，問我們就補給你。</p>' +
+      '</section>';
+  }
+
   // 取得「這台適合做什麼」的評估（fit.js 提供，載入失敗時回傳空結果）
   function fitnessOf(p) {
     return typeof window.getFitness === 'function' ? window.getFitness(p) : { kind: 'none' };
@@ -428,7 +472,10 @@
       countBadge +
       mediaHTML(p, 'card') +
       '<div class="card-body">' +
-        '<div class="tag-row">' + condBadge(p) + warrantyTag(p) + stockTag(p) + '</div>' +
+        '<div class="tag-row">' + condBadge(p) + warrantyTag(p) + stockTag(p) +
+          (inspectionOf(p).has
+            ? '<span class="tag tag-accent">' + icon('check') + '檢測報告</span>' : '') +
+        '</div>' +
         '<span class="card-brand">' + esc(p.brand) + '</span>' +
         '<h3 class="card-title"><a href="product.html?id=' + encodeURIComponent(p.id) + '">' +
           esc(p.name) + '</a></h3>' +
@@ -1062,6 +1109,7 @@
       '</div>' +
       '<div class="section">' +
         fitPanelHTML(p) +
+        inspectPanelHTML(p) +
         '<h2 class="section-title" style="margin-top:28px">完整規格</h2>' +
         '<div class="panel"><table class="spec-table"><caption class="sr-only">' +
           esc(p.name) + ' 規格表</caption><tbody>' + specRows + '</tbody></table></div>' +

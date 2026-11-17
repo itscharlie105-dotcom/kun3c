@@ -75,6 +75,15 @@ window.PRODUCTS = [
     ],
     highlights: ['電池健康度 96%', '附原廠充電器', '記憶體可再加裝一條', '文書、追劇、線上課程都夠用'],
     notes: '二手整理機（非一手自用），已完成基本功能測試。上蓋與掌托有正常二手使用痕跡，詳細外觀以實拍照片為準。',
+    // 檢測紀錄：只填實拍照片與截圖可以證明的項目，其餘留白顯示「未檢測」
+    inspection: {
+      date: '2026-07-20',
+      power: true,
+      battery: '96%（31,968 / 33,156 mWh）',
+      disk: '240GB SSD，系統顯示 224GB',
+      memory: '8GB DDR4 2400MHz，已使用 1 / 2 插槽',
+      appearance: '!上蓋與掌托有正常使用痕跡，以實拍照片為準'
+    },
     images: [
       'images/lap-06-1.jpg',
       'images/lap-06-2.jpg',

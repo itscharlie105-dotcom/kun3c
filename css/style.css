@@ -333,6 +333,36 @@ main { display: block; min-height: 50vh; }
 }
 .empty-state .icon { width: 44px; height: 44px; color: var(--text-dim); margin: 0 auto 12px; }
 
+/* ---------- 逐台檢測報告 ---------- */
+.ins-panel { margin-top: 20px; }
+.ins-head {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  justify-content: space-between; gap: 10px;
+}
+.ins-date { color: var(--text-dim); font-size: .84rem; }
+.ins-summary { margin: 10px 0 14px; color: var(--accent); font-weight: 600; }
+.ins-list { display: grid; gap: 2px; }
+.ins-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 2px; border-bottom: 1px solid var(--border);
+}
+.ins-row:last-child { border-bottom: 0; }
+.ins-mark {
+  display: flex; align-items: center; justify-content: center; flex: none;
+  width: 22px; height: 22px; border-radius: 999px;
+  font-size: .8rem; font-weight: 700; border: 1px solid;
+}
+.ins-mark.is-pass { color: var(--ok); border-color: rgba(52, 211, 153, .5); background: rgba(52, 211, 153, .12); }
+.ins-mark.is-note { color: var(--warn); border-color: rgba(245, 158, 11, .5); background: rgba(245, 158, 11, .12); }
+.ins-mark.is-none { color: var(--text-dim); border-color: var(--border); }
+.ins-label { display: flex; flex-direction: column; font-weight: 600; flex: 1 1 auto; }
+.ins-label small { color: var(--text-dim); font-weight: 400; font-size: .78rem; margin-top: 2px; }
+.ins-result { text-align: right; font-size: .92rem; }
+.ins-row.is-pass .ins-result { color: var(--text); }
+.ins-row.is-note .ins-result { color: var(--warn); }
+.ins-row.is-none .ins-result { color: var(--text-dim); }
+.ins-note { margin: 14px 0 0; }
+
 /* ---------- 選購小幫手 ---------- */
 .quiz-block { margin-bottom: 26px; }
 .quiz-q {
@@ -744,6 +774,8 @@ fieldset { border: 0; margin: 0; padding: 0; }
   .nav-dd-menu { position: static; box-shadow: none; margin: 4px 0 4px 12px; }
   .detail-layout { grid-template-columns: 1fr; }
   .fit-row { align-items: flex-start; gap: 10px; }
+  .ins-row { align-items: flex-start; }
+  .ins-result { flex: none; max-width: 42%; }
   .fit-dot { width: 10px; height: 10px; }
   .gallery-thumb { width: 72px; height: 56px; }
   .lightbox { padding: 64px 8px; }
