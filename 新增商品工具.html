@@ -13,6 +13,24 @@
   .spec-rows { display: grid; gap: 10px; }
   .spec-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
   .ins-rows { display: grid; gap: 8px; }
+  .redeem-card {
+    margin-top: 14px; padding: 14px 16px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface-2);
+  }
+  .redeem-card.is-ok { border-color: rgba(52, 211, 153, .5); background: rgba(52, 211, 153, .1); }
+  .redeem-card.is-warn { border-color: rgba(245, 158, 11, .5); background: rgba(245, 158, 11, .1); }
+  .redeem-card.is-bad { border-color: rgba(248, 113, 113, .5); background: rgba(248, 113, 113, .1); }
+  .redeem-card h4 { margin: 0 0 8px; font-size: 1.05rem; }
+  .redeem-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; }
+  .redeem-card dt { color: var(--text-dim); font-size: .88rem; }
+  .redeem-card dd { margin: 0; font-weight: 600; font-size: .92rem; }
+  .redeem-row {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 9px 2px; border-bottom: 1px solid var(--border); font-size: .9rem;
+  }
+  .redeem-row:last-child { border-bottom: 0; }
+  .redeem-row code { font-size: .88rem; }
+  .redeem-row .when { color: var(--text-dim); margin-left: auto; font-size: .82rem; }
   .ins-edit {
     display: grid; grid-template-columns: 1.1fr 120px 1.4fr; gap: 10px; align-items: center;
   }
@@ -246,6 +264,8 @@
             <span>附上網站連結</span></label>
           <label class="check"><input type="checkbox" id="post-contact" checked>
             <span>附上運送、保固與聯絡方式</span></label>
+          <label class="check"><input type="checkbox" id="post-lucky">
+            <span>附上每日抽折價券的宣傳（活動開著才有用）</span></label>
         </div>
 
         <label class="sr-only" for="post-text">貼文內容</label>
@@ -261,6 +281,28 @@
         </div>
       </section>
 
+      <section class="panel panel-pad" id="redeem-tool" style="margin-top:22px">
+        <h2 class="section-title" style="font-size:1.2rem">五、折價券核銷</h2>
+        <p class="hint">客人下單時訂單內容裡會有一組券碼（像 <code>K3C-300-275-1124-8F2A</code>）。
+          貼進來按查驗，會幫你拆開看面額、手機末三碼和到期日，
+          <strong>並且記住這張用過了</strong>，同一組碼再貼一次會跳警告。</p>
+
+        <div class="field" style="margin-top:14px">
+          <label for="redeem-code">券碼</label>
+          <input class="input" type="text" id="redeem-code" placeholder="K3C-300-275-1124-8F2A"
+                 autocomplete="off" spellcheck="false">
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" type="button" id="redeem-check">查驗這組券碼</button>
+          <button class="btn btn-ghost" type="button" id="redeem-mark" hidden>標記為已核銷</button>
+        </div>
+        <div id="redeem-out" role="status" aria-live="polite"></div>
+
+        <h3 class="section-title" style="font-size:1rem;margin-top:22px">已核銷紀錄</h3>
+        <p class="hint" style="margin:0 0 10px">只存在這台電腦，換電腦就看不到了。最多留 100 筆。</p>
+        <div id="redeem-list"></div>
+      </section>
+
     </div>
   </div>
 </main>
@@ -271,6 +313,7 @@
 <script src="js/svg.js"></script>
 <script src="js/fit.js"></script>
 <script src="js/inspect.js"></script>
+<script src="js/lucky.js"></script>
 <script src="js/app.js"></script>
 <script>
 /* =====================================================================
@@ -504,6 +547,142 @@
       keep.map(toCode).join(',\n\n') +
       '\n];\n';
   }
+
+  /* ---------- 折價券核銷 ---------- */
+  var REDEEM_KEY = 'kun3c_redeemed';
+
+  function redeemRead() {
+    try {
+      var list = JSON.parse(window.localStorage.getItem(REDEEM_KEY) || '[]');
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+
+  function redeemWrite(list) {
+    try {
+      window.localStorage.setItem(REDEEM_KEY, JSON.stringify(list.slice(0, 100)));
+    } catch (e) { /* 瀏覽器停用儲存時就不留紀錄 */ }
+  }
+
+  // 把券碼拆開：K3C-面額-手機末3碼-到期MMDD-亂數
+  function redeemParse(code) {
+    var m = /^K3C-(\d+)-(\d{3})-(\d{2})(\d{2})-([A-Z0-9]{4})$/i.exec(String(code).trim());
+    if (!m) { return null; }
+    var now = new Date();
+    var month = Number(m[3]);
+    var day = Number(m[4]);
+    // 券最長只有兩週，所以到期月份比現在小很多時，代表是明年的
+    var year = now.getFullYear();
+    if (month < now.getMonth() - 1) { year += 1; }
+    var expires = new Date(year, month - 1, day);
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return {
+      code: String(code).trim().toUpperCase(),
+      amount: Number(m[1]),
+      tail: m[2],
+      expiresAt: year + '-' + m[3] + '-' + m[4],
+      expired: expires.getTime() < today.getTime()
+    };
+  }
+
+  function redeemRenderList() {
+    var list = redeemRead();
+    if (!list.length) {
+      $('#redeem-list').innerHTML = '<p class="hint" style="margin:0">還沒有核銷紀錄。</p>';
+      return;
+    }
+    $('#redeem-list').innerHTML = list.map(function (r, i) {
+      return '<div class="redeem-row">' +
+        '<code>' + r.code + '</code>' +
+        '<span>折 NT$ ' + Number(r.amount).toLocaleString() + '</span>' +
+        '<span>手機末三碼 ' + r.tail + '</span>' +
+        '<span class="when">' + r.at + '</span>' +
+        '<button class="btn-remove" type="button" data-unredeem="' + i + '">刪除</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function initRedeem() {
+    var input = $('#redeem-code');
+    var out = $('#redeem-out');
+    var markBtn = $('#redeem-mark');
+    var pending = null;
+
+    function show(cls, title, rows, note) {
+      out.innerHTML = '<div class="redeem-card ' + cls + '"><h4>' + title + '</h4>' +
+        (rows ? '<dl>' + rows + '</dl>' : '') +
+        (note ? '<p class="hint" style="margin:10px 0 0">' + note + '</p>' : '') +
+        '</div>';
+    }
+
+    $('#redeem-check').addEventListener('click', function () {
+      pending = null;
+      markBtn.setAttribute('hidden', '');
+      var info = redeemParse(input.value);
+      if (!info) {
+        show('is-bad', '這不是一組有效的券碼', '',
+          '正確格式長這樣：<code>K3C-300-275-1124-8F2A</code>。' +
+          '請直接從客人傳來的訂單內容複製貼上，不要自己手打。');
+        return;
+      }
+      var rows = '<dt>折抵金額</dt><dd>NT$ ' + info.amount.toLocaleString() + '</dd>' +
+        '<dt>最低消費</dt><dd>NT$ ' + (info.amount * 20).toLocaleString() + '</dd>' +
+        '<dt>手機末三碼</dt><dd>' + info.tail + '</dd>' +
+        '<dt>到期日</dt><dd>' + info.expiresAt + '</dd>';
+      var used = null;
+      redeemRead().forEach(function (r) {
+        if (r.code === info.code) { used = r; }
+      });
+      if (used) {
+        show('is-bad', '這張券已經核銷過了', rows,
+          '核銷時間：' + used.at + '。同一張券只能用一次，請跟客人確認。');
+        return;
+      }
+      if (info.expired) {
+        show('is-bad', '這張券已經過期', rows, '到期日已經過了，照規則不折抵。');
+        return;
+      }
+      pending = info;
+      markBtn.removeAttribute('hidden');
+      show('is-ok', '券碼有效，可以折 NT$ ' + info.amount.toLocaleString(), rows,
+        '<strong>請再核對兩件事：</strong>客人訂單上的電話末三碼要是 <strong>' + info.tail +
+        '</strong>，而且商品總額要滿 NT$ ' + (info.amount * 20).toLocaleString() +
+        '（折價券不折運費）。確認沒問題再按「標記為已核銷」。');
+    });
+
+    markBtn.addEventListener('click', function () {
+      if (!pending) { return; }
+      var list = redeemRead();
+      list.unshift({
+        code: pending.code,
+        amount: pending.amount,
+        tail: pending.tail,
+        at: today() + ' ' + new Date().toTimeString().slice(0, 5)
+      });
+      redeemWrite(list);
+      redeemRenderList();
+      markBtn.setAttribute('hidden', '');
+      show('is-warn', '已記錄：' + pending.code, '',
+        '下次再貼同一組碼就會跳出警告。');
+      pending = null;
+      input.value = '';
+      input.focus();
+    });
+
+    $('#redeem-list').addEventListener('click', function (ev) {
+      var btn = ev.target.closest('[data-unredeem]');
+      if (!btn) { return; }
+      if (!window.confirm('刪除這筆核銷紀錄？刪掉之後同一組券碼就不會再跳警告了。')) { return; }
+      var list = redeemRead();
+      list.splice(Number(btn.getAttribute('data-unredeem')), 1);
+      redeemWrite(list);
+      redeemRenderList();
+    });
+
+    redeemRenderList();
+  }
+
+  initRedeem();
 
   /* ---------- 新增商品 ---------- */
   buildSpecRows();
@@ -776,20 +955,37 @@
     return out.join('\n');
   }
 
+  // 抽獎活動的宣傳段落（活動關掉時回傳空字串，貼文就不會提到它）
+  function luckyPitch() {
+    var lot = CFG.lottery || {};
+    if (lot.enabled !== true || !lot.prizes || !lot.prizes.length) { return ''; }
+    var top = 0;
+    lot.prizes.forEach(function (p) {
+      if (Number(p.amount) > top) { top = Number(p.amount); }
+    });
+    var url = String(CFG.siteUrl || '');
+    return '\n\n🎁 順便說一下，網站上可以【每天抽一次折價券】\n' +
+      '・最高折 NT$ ' + top.toLocaleString() + '，不用註冊、不用留個資\n' +
+      '・中獎機率我們全部公開寫在頁面上，不玩「中獎率依活動辦法」那一套\n' +
+      '・抽到比手上更大的才會換，不會愈抽愈小\n' +
+      (url ? '・' + url + 'lucky.html' : '');
+  }
+
   function buildPost() {
     var kind = postKind();
     var withLink = $('#post-link').checked;
     var withContact = $('#post-contact').checked;
+    var tail = $('#post-lucky').checked ? luckyPitch() : '';
     var items = pickedProducts();
-    if (kind === 'intro') { return introPost(withLink, withContact); }
+    if (kind === 'intro') { return introPost(withLink, withContact) + tail; }
     if (!items.length) {
       return '（請先在上面勾選要放進貼文的商品）';
     }
     if (kind === 'single') {
-      return singlePost(items[0], withLink, withContact) +
+      return singlePost(items[0], withLink, withContact) + tail +
         (items.length > 1 ? '\n\n※ 單台貼文只會用勾選的第一台，其餘忽略。' : '');
     }
-    return multiPost(items, withLink, withContact);
+    return multiPost(items, withLink, withContact) + tail;
   }
 
   function refreshPost() {
@@ -828,6 +1024,7 @@
   });
   $('#post-link').addEventListener('change', refreshPost);
   $('#post-contact').addEventListener('change', refreshPost);
+  $('#post-lucky').addEventListener('change', refreshPost);
 
   $('#copy-post').addEventListener('click', function () {
     var ta = $('#post-text');

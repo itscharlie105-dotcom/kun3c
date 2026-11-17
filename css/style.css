@@ -333,6 +333,107 @@ main { display: block; min-height: 50vh; }
 }
 .empty-state .icon { width: 44px; height: 44px; color: var(--text-dim); margin: 0 auto 12px; }
 
+/* ---------- 每日抽獎與折價券 ---------- */
+.cta-band--lucky {
+  border-color: rgba(34, 211, 238, .4);
+  background: linear-gradient(135deg, rgba(34, 211, 238, .1), rgba(59, 130, 246, .08));
+}
+
+.lucky-join { max-width: 520px; }
+
+/* 卡包：手上那張券 */
+.wallet { display: flex; align-items: stretch; overflow: hidden; margin-bottom: 20px; }
+.wallet--empty { display: block; padding: 18px; color: var(--text-dim); }
+.wallet--empty strong { color: var(--text); }
+.wallet-main {
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  padding: 20px 24px; min-width: 190px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, .16), rgba(59, 130, 246, .16));
+  border-right: 1px dashed var(--border);
+}
+.wallet-label { color: var(--text-dim); font-size: .82rem; }
+.wallet-amount {
+  font-size: 2.1rem; font-weight: 700; color: var(--accent); line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.wallet-min { color: var(--text-dim); font-size: .86rem; }
+.wallet-side {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: 8px; padding: 18px 20px; flex: 1 1 auto;
+}
+.wallet-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .95rem; letter-spacing: .04em; color: var(--text);
+  padding: 5px 10px; border: 1px dashed var(--border); border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.wallet-exp { color: var(--text-dim); font-size: .86rem; }
+.wallet-exp.is-soon { color: var(--warn); font-weight: 600; }
+
+/* 抽獎機 */
+.lucky-machine { text-align: center; }
+.lucky-reel {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+  margin: 0 0 18px; padding: 0; list-style: none;
+}
+.lucky-slot {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 16px 6px; min-height: 86px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: background var(--speed) var(--ease), border-color var(--speed) var(--ease),
+    transform var(--speed) var(--ease);
+}
+.lucky-slot-main { font-weight: 700; font-size: 1.02rem; }
+.lucky-slot-sub { color: var(--text-dim); font-size: .74rem; }
+.lucky-slot.is-blank .lucky-slot-main { color: var(--text-dim); font-weight: 600; }
+.lucky-slot.is-active {
+  background: rgba(34, 211, 238, .16); border-color: var(--accent);
+  transform: translateY(-3px);
+}
+.lucky-slot.is-active .lucky-slot-main { color: var(--accent); }
+.lucky-go { font-size: 1.05rem; }
+.lucky-result { min-height: 26px; margin: 0 0 14px; color: var(--text-dim); }
+.lucky-result span { display: block; font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+.lucky-result .r-win { color: var(--ok); }
+.lucky-result .r-keep { color: var(--accent); }
+.lucky-result .r-none { color: var(--text-dim); }
+.lucky-result strong { color: var(--text); }
+
+.lucky-foot {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 10px; margin: 14px 2px 0;
+}
+.lucky-stat { color: var(--text-dim); font-size: .84rem; }
+.btn-link {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--text-dim); font: inherit; font-size: .84rem;
+  text-decoration: underline; text-underline-offset: 3px;
+  transition: color var(--speed) var(--ease);
+}
+.btn-link:hover { color: var(--accent); }
+
+/* 機率公開表 */
+.lucky-odds { margin-top: 28px; }
+.odds-table thead th { width: auto; }
+.odds-table tbody th { width: 42%; }
+.odds-table td { font-variant-numeric: tabular-nums; }
+.odds-amount { color: var(--accent); font-weight: 700; }
+.odds-none { color: var(--text-dim); }
+
+/* 結帳摘要裡的折價券 */
+.sum-row--cut strong { color: var(--ok); }
+.sum-row--cut small {
+  display: block; margin-top: 2px; font-size: .74rem; color: var(--text-dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.coupon-note {
+  margin: 10px 0 0; padding: 10px 12px; font-size: .86rem; line-height: 1.6;
+  color: var(--text-dim); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.coupon-note strong { color: var(--accent); }
+
 /* ---------- 逐台檢測報告 ---------- */
 .ins-panel { margin-top: 20px; }
 .ins-head {
@@ -779,6 +880,9 @@ fieldset { border: 0; margin: 0; padding: 0; }
 
 /* ---------- 響應式：768px（平板／手機，導覽改漢堡選單） ---------- */
 @media (max-width: 768px) {
+  .lucky-reel { gap: 6px; }
+  .lucky-slot { padding: 13px 4px; min-height: 76px; }
+  .lucky-slot-main { font-size: .94rem; }
   .nav-toggle { display: flex; }
   .primary-nav {
     display: none; position: absolute; left: 0; right: 0; top: 100%;
@@ -829,6 +933,12 @@ fieldset { border: 0; margin: 0; padding: 0; }
   .section-title { font-size: 1.35rem; }
   .quiz-options { grid-template-columns: 1fr; }
   .cond-table th, .cond-table td { padding: 9px 8px; font-size: .86rem; }
+  .lucky-reel { grid-template-columns: repeat(3, 1fr); }
+  .wallet { flex-direction: column; }
+  .wallet-main { border-right: 0; border-bottom: 1px dashed var(--border); min-width: 0; }
+  .wallet-side { width: 100%; }
+  .wallet-side .btn { width: 100%; }
+  .lucky-foot { flex-direction: column-reverse; align-items: flex-start; }
   /* 窄螢幕時成色標籤會換行，圓角太大會變成圓圈，改成方角比較好讀 */
   .cond-table .cond { border-radius: var(--radius-sm); }
   .owner-photo { height: 470px; }

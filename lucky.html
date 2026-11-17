@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>每日抽折價券｜汐止阿坤3C工作室</title>
+<meta name="description" content="每天可以抽一次折價券，最高折抵 500 元。所有中獎機率完全公開，不玩「中獎率依活動辦法」那一套。抽到的券直接在結帳時折抵。">
+<!-- 分享到 Facebook／LINE 時顯示的預覽卡（換網域或改店名時，這幾行要一起改） -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="汐止阿坤3C工作室">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:url" content="https://itscharlie105-dotcom.github.io/kun3c/lucky.html">
+<meta property="og:title" content="每日抽折價券｜汐止阿坤3C工作室">
+<meta property="og:description" content="每天可以抽一次折價券，最高折抵 500 元。所有中獎機率完全公開，不玩「中獎率依活動辦法」那一套。">
+<meta property="og:image" content="https://itscharlie105-dotcom.github.io/kun3c/images/share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="汐止阿坤3C工作室：嚴選中古3C，每一台都實機檢測">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://itscharlie105-dotcom.github.io/kun3c/lucky.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%230B0F14'/%3E%3Crect%20x='6'%20y='9'%20width='20'%20height='13'%20rx='2'%20fill='none'%20stroke='%2322D3EE'%20stroke-width='2'/%3E%3Cpath%20d='M12%2026h8'%20stroke='%2322D3EE'%20stroke-width='2'%20stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-title="每日抽折價券" data-page="lucky">
+<a class="sr-only" href="#main">跳到主要內容</a>
+<header class="site-header" id="site-header"></header>
+
+<main id="main">
+  <div class="wrap">
+    <nav class="crumb" aria-label="麵包屑">
+      <a href="index.html">首頁</a><span>/</span><span>每日抽折價券</span>
+    </nav>
+
+    <!-- 活動關閉時顯示 -->
+    <div class="section" id="lucky-off" hidden>
+      <div class="empty-state">
+        <span data-icon="gift"></span>
+        <h1>抽獎活動目前沒有開放</h1>
+        <p>活動結束了，或是店長暫時把它關起來。歡迎直接去看看現在有哪些機器。</p>
+        <a class="btn btn-primary" href="products.html">去逛商品</a>
+      </div>
+    </div>
+
+    <div class="section" id="lucky-on" hidden>
+      <div class="section-head">
+        <h1 class="section-title">每天抽一次，最高折 500 元</h1>
+        <p>買二手機器本來就是想省錢，這裡再讓你多省一點。
+          <strong>所有中獎機率都寫在下面</strong>，不玩「中獎率依活動辦法」那一套。</p>
+      </div>
+
+      <!-- 還沒輸入手機號碼 -->
+      <form class="panel panel-pad lucky-join" id="lucky-join" novalidate hidden>
+        <h2 class="section-title" style="font-size:1.2rem;margin-top:0">先留一組手機號碼</h2>
+        <p>抽到的券會綁定這組號碼，來面交或下單時我們用它核對。
+          <strong>號碼只存在你自己的手機或電腦裡</strong>，不會傳給我們，也不會傳給任何人。</p>
+        <div class="field" style="margin-top:14px">
+          <label for="lucky-phone">手機號碼</label>
+          <input class="input" type="tel" id="lucky-phone" inputmode="numeric"
+                 autocomplete="tel" placeholder="0912345678" maxlength="12"
+                 aria-describedby="lucky-join-err">
+          <p class="field-error" id="lucky-join-err" role="alert"></p>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">開始抽獎</button>
+        <p class="hint" style="margin-top:12px">沒有要你註冊，也不用密碼。這只是用來分辨「是不是同一個人」而已。</p>
+      </form>
+
+      <!-- 抽獎主畫面 -->
+      <div id="lucky-main" hidden>
+
+        <!-- 目前持有的券 -->
+        <div id="lucky-wallet"></div>
+
+        <!-- 抽獎機 -->
+        <div class="panel panel-pad lucky-machine">
+          <ul class="lucky-reel" id="lucky-reel"></ul>
+          <p class="lucky-result" id="lucky-result" role="status" aria-live="polite"></p>
+          <button class="btn btn-primary btn-block lucky-go" type="button" id="lucky-go">
+            今天還沒抽，抽一次
+          </button>
+          <p class="hint" id="lucky-sub" style="margin-top:12px;text-align:center"></p>
+        </div>
+
+        <p class="lucky-foot">
+          <button class="btn-link" type="button" id="lucky-leave">換一組手機號碼</button>
+          <span class="lucky-stat" id="lucky-stat"></span>
+        </p>
+      </div>
+
+      <!-- 機率公開 -->
+      <section class="panel panel-pad lucky-odds" aria-labelledby="odds-title">
+        <h2 class="section-title" style="font-size:1.2rem;margin:0 0 6px" id="odds-title">
+          中獎機率全部公開
+        </h2>
+        <p class="hint" style="margin:0 0 14px">
+          這張表就是程式實際在用的數字，不是另外寫的文案。
+          改機率要動 <code>js/config.js</code>，改了這張表會跟著變。
+        </p>
+        <table class="spec-table odds-table">
+          <caption class="sr-only">獎項、中獎機率與最低消費對照表</caption>
+          <thead>
+            <tr><th scope="col">獎項</th><th scope="col">中獎機率</th><th scope="col">最低消費</th></tr>
+          </thead>
+          <tbody id="odds-body"></tbody>
+        </table>
+        <p class="hint" id="odds-ev" style="margin-top:12px"></p>
+      </section>
+
+      <!-- 活動規則 -->
+      <section class="section" aria-labelledby="rules-title">
+        <h2 class="section-title" style="font-size:1.3rem" id="rules-title">活動規則</h2>
+        <div class="accordion">
+
+          <details class="acc" open>
+            <summary>一、怎麼抽、怎麼算一天</summary>
+            <div class="acc-body">
+              <ul>
+                <li>留一組手機號碼就可以開始抽，<strong>每天一次</strong>，不用註冊也不用密碼。</li>
+                <li>「一天」以你裝置上的日期為準，過了午夜 12 點就能再抽一次。</li>
+                <li>抽獎完全免費，不需要消費、不需要分享、不需要留下任何其他個資。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary>二、為什麼只能有一張券（重要）</summary>
+            <div class="acc-body">
+              <p><strong>同一組號碼同時只會有一張折價券</strong>，規則是這樣：</p>
+              <ul>
+                <li>手上沒券時抽到券 → 直接拿到那張。</li>
+                <li>抽到<strong>比手上這張大</strong>的 → 換成新的那張，舊的立刻作廢。</li>
+                <li>抽到<strong>比手上這張小</strong>的 → <strong>原本那張留著</strong>，不會變小，等於這次沒事發生。</li>
+                <li>抽到<strong>跟手上一樣大</strong>的 → 券不變，但<strong>有效期限重新計算</strong>，等於幫你續命。</li>
+              </ul>
+              <p>所以每天抽只會愈來愈好，不會愈抽愈差。但也因為這樣，券一定要有有效期限，
+                否則抽久了每個人手上都會是最大面額那張，這個活動就沒辦法辦下去了。</p>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary>三、折價券怎麼用</summary>
+            <div class="acc-body">
+              <ul>
+                <li>每張券都有<strong>最低消費金額</strong>（面額的 20 倍），
+                  也就是最多折掉訂單的 5%。金額寫在券上面，不用自己算。</li>
+                <li>結帳時系統會<strong>自動幫你折</strong>，不用輸入券碼。金額不夠時會告訴你還差多少。</li>
+                <li>一張訂單<strong>只能用一張券</strong>，折價券<strong>不折抵運費</strong>。</li>
+                <li>送出訂單後券就用掉了，訂單內容裡會帶著券碼讓我們核對。</li>
+                <li>如果最後沒有成交（例如機器已經賣掉、或你改變主意），跟我們說一聲，
+                  我們會把券還給你。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary>四、有效期限與失效</summary>
+            <div class="acc-body">
+              <ul>
+                <li>券的有效天數寫在券上，<strong>從抽到的那天算起（含當天）</strong>，過期自動消失。</li>
+                <li>過期的券不補發、不延期、不能兌換現金，也不能轉讓給別人。</li>
+                <li>抽獎紀錄與券都存在<strong>你這台裝置的瀏覽器裡</strong>。
+                  換手機、換瀏覽器、用無痕視窗、清除瀏覽資料，紀錄都會不見，而且<strong>我們救不回來</strong>。</li>
+                <li>活動如果要停辦，我們會先在社團公告，留幾天讓大家把手上的券用完。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary>五、我們的誠實說明（請看完）</summary>
+            <div class="acc-body">
+              <p>這個網站是一個<strong>沒有會員系統、沒有資料庫的純靜態網站</strong>，
+                我們覺得該先講清楚它的限制，而不是假裝它是一套很嚴密的系統：</p>
+              <ul>
+                <li><strong>我們看不到你的抽獎紀錄。</strong>所有資料只在你的裝置上，
+                  我們這邊沒有任何名單，也沒辦法查「某某人抽到什麼」。</li>
+                <li><strong>懂技術的人有辦法改掉本機的資料。</strong>
+                  這是純靜態網站的先天限制，我們不打算假裝做得到防弊。
+                  所以券碼會綁手機號碼，核對不上我們就不折，這點先說在前面。</li>
+                <li><strong>每人每筆訂單最多折 500 元</strong>，就算真的有人想鑽，上限也就是這樣，
+                  我們寧可用這個代價換一個簡單、不用註冊、不收個資的活動。</li>
+                <li>如果出現明顯異常的使用狀況，我們會保留不折抵的權利，但會跟你說明原因。</li>
+              </ul>
+            </div>
+          </details>
+
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/svg.js"></script>
+<script src="js/fit.js"></script>
+<script src="js/inspect.js"></script>
+<script src="js/lucky.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

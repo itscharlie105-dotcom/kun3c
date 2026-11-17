@@ -96,6 +96,13 @@
     try { window.localStorage.setItem(key, value); } catch (e) { /* 忽略寫入失敗 */ }
   }
 
+  /* ---------------- 每日抽獎（lucky.js 沒載入時全部靜音） ---------------- */
+
+  // 活動是不是開著；lucky.js 沒載到或設定關閉時，全站入口都不會出現
+  function luckyOn() {
+    return !!(window.Lucky && window.Lucky.enabled());
+  }
+
   /* ---------------- 聯絡管道（Facebook／LINE…） ---------------- */
 
   // 把 LINE ID 前後的全形括號與空白去掉
@@ -523,6 +530,7 @@
     var nav = navLink('index.html', '首頁', page === 'home') +
       navLink('products.html', '全部商品', page === 'products') +
       navLink('helper.html', '選購小幫手', page === 'helper') +
+      (luckyOn() ? navLink('lucky.html', '每日抽獎', page === 'lucky') : '') +
       '<li><details class="nav-dd"><summary>商品分類</summary>' +
       '<ul class="nav-dd-menu">' + dd + '</ul></details></li>' +
       navLink('guide.html', '購物須知', page === 'guide') +
@@ -770,6 +778,21 @@
           '<span class="cat-count">' + n + ' 件商品</span></a>';
       }).join('');
     }
+    // 每日抽獎入口：有券的話直接把券的狀態寫在首頁上
+    var luckyBand = $('#home-lucky');
+    if (luckyBand && luckyOn()) {
+      luckyBand.removeAttribute('hidden');
+      var c = window.Lucky.coupon();
+      if (c) {
+        var left = window.Lucky.daysLeft(c);
+        $('#home-lucky-title').textContent = '你有一張 ' + money(c.amount) + ' 折價券';
+        $('#home-lucky-text').textContent = '滿 ' + money(c.min) + ' 可用，' +
+          (left === 0 ? '今天是最後一天' : '還有 ' + left + ' 天到期') +
+          '。今天也別忘了再抽一次，抽到更大的才會換。';
+        $('#home-lucky-btn').textContent = '去抽今天這一次';
+      }
+    }
+
     var feat = $('#featured-grid');
     if (feat) {
       var list = PRODUCTS.slice().sort(function (a, b) {
@@ -1200,7 +1223,14 @@
           subtotal < Number(CFG.freeShippingThreshold || 0)) {
         ship = Number(CFG.shippingFee || 0);
       }
-      return { list: list, subtotal: subtotal, ship: ship, total: subtotal + ship };
+      // 折價券只折商品總額，不折運費；免運門檻也用折扣前的金額判斷
+      var cp = luckyOn()
+        ? window.Lucky.applyTo(subtotal)
+        : { has: false, usable: false, amount: 0, min: 0, gap: 0, coupon: null };
+      return {
+        list: list, subtotal: subtotal, ship: ship, cp: cp,
+        discount: cp.amount, total: subtotal + ship - cp.amount
+      };
     }
 
     function renderSummary() {
@@ -1208,6 +1238,7 @@
       $('#sum-subtotal').textContent = money(t.subtotal);
       $('#sum-ship').textContent = t.ship > 0 ? money(t.ship) : '免運 NT$ 0';
       $('#sum-total').textContent = money(t.total);
+      renderCouponRow(t);
       var hint = $('#ship-hint');
       var gap = Number(CFG.freeShippingThreshold || 0) - t.subtotal;
       if (shippingMethod() === '面交') {
@@ -1216,6 +1247,35 @@
         hint.textContent = '再買 ' + money(gap) + ' 即可享宅配免運。';
       } else {
         hint.textContent = '已達免運門檻，宅配免運費。';
+      }
+    }
+
+    // 結帳摘要裡的折價券那一列：有券就折，沒到低消就說還差多少
+    function renderCouponRow(t) {
+      var row = $('#sum-coupon-row');
+      var note = $('#coupon-note');
+      if (!row || !note) { return; }
+      if (!luckyOn()) {
+        row.setAttribute('hidden', '');
+        note.setAttribute('hidden', '');
+        return;
+      }
+      var cp = t.cp;
+      if (cp.usable) {
+        row.removeAttribute('hidden');
+        $('#sum-coupon').textContent = '-' + money(cp.amount);
+        $('#sum-coupon-code').textContent = cp.coupon.code;
+        note.setAttribute('hidden', '');
+      } else if (cp.has) {
+        row.setAttribute('hidden', '');
+        note.removeAttribute('hidden');
+        note.innerHTML = '你有一張 <strong>' + money(cp.coupon.amount) + '</strong> 折價券，' +
+          '滿 ' + money(cp.min) + ' 才能用，還差 <strong>' + money(cp.gap) + '</strong>。';
+      } else {
+        row.setAttribute('hidden', '');
+        note.removeAttribute('hidden');
+        note.innerHTML = '還沒有折價券？<a href="lucky.html">每天可以抽一次</a>，最高折 ' +
+          money(500) + '。';
       }
     }
 
@@ -1304,6 +1364,7 @@
       if (!t.list.length) { return; }
       var order = buildOrder(t, form);
       storeOrder(order);
+      if (order.coupon && luckyOn()) { window.Lucky.spend(); }
       cartClear();
       showOrderDone(order);
     });
@@ -1337,6 +1398,9 @@
     lines.push('--------------------------------');
     lines.push('商品總額：' + money(t.subtotal));
     lines.push('運費：' + (t.ship > 0 ? money(t.ship) : 'NT$ 0（免運）'));
+    if (t.discount > 0) {
+      lines.push('折價券：-' + money(t.discount) + '（' + t.cp.coupon.code + '）');
+    }
     lines.push('應付總額：' + money(t.total));
     lines.push('--------------------------------');
     lines.push('【取貨資訊】');
@@ -1347,7 +1411,8 @@
     if (method === '宅配') {
       lines.push('宅配地址：' + $('#address', form).value.trim());
     } else {
-      lines.push('面交地點：' + (CFG.meetupArea || '面交地點以 ' + channelName() + ' 約定為準'));
+      lines.push('面交地點：' +
+        channelLabel(CFG.meetupArea || '面交地點以 {管道} 約定為準'));
     }
     var note = $('#note', form).value.trim();
     lines.push('備註：' + (note || '無'));
@@ -1361,6 +1426,8 @@
       items: items,
       subtotal: t.subtotal,
       shipping: t.ship,
+      discount: t.discount,
+      coupon: t.discount > 0 ? t.cp.coupon.code : '',
       total: t.total,
       method: method,
       text: text
@@ -1404,6 +1471,215 @@
     window.setTimeout(function () { $('#order-no').focus(); }, 0);
   }
 
+  /* ---------------- 每日抽獎頁 ---------------- */
+  function initLucky() {
+    var offBox = $('#lucky-off');
+    var onBox = $('#lucky-on');
+    if (!offBox || !onBox) { return; }
+
+    if (!luckyOn()) {
+      offBox.removeAttribute('hidden');
+      fillSlots(offBox);
+      return;
+    }
+    onBox.removeAttribute('hidden');
+
+    var L = window.Lucky;
+    var joinForm = $('#lucky-join');
+    var mainBox = $('#lucky-main');
+    var reel = $('#lucky-reel');
+    var goBtn = $('#lucky-go');
+    var resultBox = $('#lucky-result');
+    var subNote = $('#lucky-sub');
+    var table = L.prizeTable();
+    var spinning = false;
+
+    // 獎項的顯示名稱（0 元就是銘謝惠顧）
+    function prizeName(amount) {
+      return amount > 0 ? money(amount) : '銘謝惠顧';
+    }
+
+    /* ----- 機率公開表 ----- */
+    $('#odds-body').innerHTML = table.map(function (row) {
+      return '<tr><th scope="row">' +
+        (row.amount > 0
+          ? '<span class="odds-amount">' + money(row.amount) + ' 折價券</span>'
+          : '<span class="odds-none">銘謝惠顧</span>') +
+        '</th><td>' + row.percent.toFixed(2) + '%</td><td>' +
+        (row.amount > 0 ? '滿 ' + money(row.min) : '—') + '</td></tr>';
+    }).join('');
+
+    var ev = 0;
+    table.forEach(function (row) { ev += row.amount * row.percent / 100; });
+    $('#odds-ev').innerHTML = '平均每抽一次的期望值是 <strong>' + money(Math.round(ev)) +
+      '</strong>，券的有效期限是 <strong>' + L.couponDays() + ' 天</strong>，' +
+      '最低消費一律是面額的 20 倍（也就是最多折掉訂單的 5%）。';
+
+    /* ----- 抽獎機的格子 ----- */
+    reel.innerHTML = table.map(function (row) {
+      return '<li class="lucky-slot' + (row.amount > 0 ? '' : ' is-blank') + '">' +
+        '<span class="lucky-slot-main">' + prizeName(row.amount) + '</span>' +
+        '<span class="lucky-slot-sub">' +
+        (row.amount > 0 ? '滿 ' + money(row.min) : '下次再來') + '</span></li>';
+    }).join('');
+    var slots = $$('.lucky-slot', reel);
+
+    /* ----- 目前持有的券 ----- */
+    function renderWallet() {
+      var c = L.coupon();
+      var box = $('#lucky-wallet');
+      if (!c) {
+        box.innerHTML = '<div class="panel panel-pad wallet wallet--empty">' +
+          '<p><strong>目前沒有折價券。</strong>抽一次看看，最高可以抽到 ' +
+          money(500) + ' 的折抵。</p></div>';
+        return;
+      }
+      var left = L.daysLeft(c);
+      box.innerHTML = '<div class="panel wallet">' +
+        '<div class="wallet-main">' +
+          '<span class="wallet-label">你的折價券</span>' +
+          '<span class="wallet-amount">' + money(c.amount) + '</span>' +
+          '<span class="wallet-min">滿 ' + money(c.min) + ' 可用</span>' +
+        '</div>' +
+        '<div class="wallet-side">' +
+          '<span class="wallet-code">' + esc(c.code) + '</span>' +
+          '<span class="wallet-exp' + (left <= 1 ? ' is-soon' : '') + '">' +
+            esc(c.expiresAt) + ' 到期' +
+            (left === 0 ? '（今天最後一天）' : '（還有 ' + left + ' 天）') + '</span>' +
+          '<a class="btn btn-ghost" href="products.html">去挑一台</a>' +
+        '</div></div>';
+    }
+
+    /* ----- 抽獎按鈕的狀態 ----- */
+    function renderButton() {
+      var gate = L.canDraw();
+      var st = L.state();
+      if (gate.ok) {
+        goBtn.disabled = false;
+        goBtn.textContent = '今天還沒抽，抽一次';
+        subNote.textContent = '每天可以抽一次，過午夜 12 點就會重置。';
+      } else {
+        goBtn.disabled = true;
+        goBtn.textContent = '今天已經抽過了';
+        subNote.textContent = '明天再來抽一次。抽到比手上更大的才會換，不會愈抽愈小。';
+      }
+      $('#lucky-stat').textContent = '手機 ' + st.phone.slice(0, 4) + '***' +
+        st.phone.slice(-3) + '　已抽 ' + st.draws + ' 次' +
+        (st.best > 0 ? '　最佳紀錄 ' + money(st.best) : '');
+    }
+
+    /* ----- 跑格子動畫；使用者偏好減少動態時直接顯示結果 ----- */
+    function spin(targetIndex, done) {
+      var reduce = window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function land() {
+        slots.forEach(function (el, i) {
+          el.classList.toggle('is-active', i === targetIndex);
+        });
+        done();
+      }
+      if (reduce || slots.length < 2) { land(); return; }
+
+      var totalTicks = slots.length * 3 + targetIndex + 1;
+      var tick = 0;
+      var delay = 55;
+      function step() {
+        slots.forEach(function (el, i) {
+          el.classList.toggle('is-active', i === tick % slots.length);
+        });
+        tick += 1;
+        if (tick >= totalTicks) { land(); return; }
+        if (totalTicks - tick <= 5) { delay += 70; }
+        window.setTimeout(step, delay);
+      }
+      step();
+    }
+
+    /* ----- 結果文案 ----- */
+    function resultText(r) {
+      if (r.outcome === 'none') {
+        return '<span class="r-none">銘謝惠顧</span>這次沒抽到，明天再來一次。';
+      }
+      if (r.outcome === 'new') {
+        return '<span class="r-win">抽到 ' + money(r.amount) + '！</span>' +
+          '券已經放進你的卡包，結帳時會自動折抵。';
+      }
+      if (r.outcome === 'upgrade') {
+        return '<span class="r-win">升級成 ' + money(r.amount) + '！</span>' +
+          '原本那張 ' + money(r.previous) + ' 已經換掉了。';
+      }
+      if (r.outcome === 'renew') {
+        return '<span class="r-win">又抽到 ' + money(r.amount) + '</span>' +
+          '面額一樣，有效期限幫你重新算，等於續命成功。';
+      }
+      return '<span class="r-keep">抽到 ' + money(r.amount) + '</span>' +
+        '比你手上那張 ' + money(r.previous) + ' 小，所以<strong>幫你留著原本那張</strong>。';
+    }
+
+    /* ----- 綁事件 ----- */
+    goBtn.addEventListener('click', function () {
+      if (spinning || !L.canDraw().ok) { return; }
+      spinning = true;
+      goBtn.disabled = true;
+      goBtn.textContent = '抽獎中…';
+      resultBox.innerHTML = '';
+
+      var r = L.draw();
+      if (!r.ok) { spinning = false; renderButton(); return; }
+
+      var index = 0;
+      for (var i = 0; i < table.length; i++) {
+        if (table[i].amount === r.amount) { index = i; break; }
+      }
+      spin(index, function () {
+        spinning = false;
+        resultBox.innerHTML = resultText(r);
+        renderWallet();
+        renderButton();
+      });
+    });
+
+    $('#lucky-leave').addEventListener('click', function () {
+      if (!window.confirm('換一組號碼會清掉目前的券和抽獎紀錄，而且救不回來。確定要換嗎？')) {
+        return;
+      }
+      L.leave();
+      showJoinOrMain();
+    });
+
+    joinForm.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var input = $('#lucky-phone');
+      var out = L.join(input.value);
+      var err = $('#lucky-join-err');
+      if (!out.ok) {
+        err.textContent = out.message;
+        input.setAttribute('aria-invalid', 'true');
+        input.focus();
+        return;
+      }
+      err.textContent = '';
+      input.removeAttribute('aria-invalid');
+      showJoinOrMain();
+      goBtn.focus();
+    });
+
+    function showJoinOrMain() {
+      var joined = L.state().joined;
+      joinForm.toggleAttribute('hidden', joined);
+      mainBox.toggleAttribute('hidden', !joined);
+      if (joined) {
+        renderWallet();
+        renderButton();
+      } else {
+        $('#lucky-phone').value = '';
+        $('#lucky-join-err').textContent = '';
+      }
+    }
+
+    showJoinOrMain();
+  }
+
   /* ---------------- 訂單紀錄頁 ---------------- */
   function initOrders() {
     var box = $('#orders-view');
@@ -1436,7 +1712,8 @@
               icon(o.method === '面交' ? 'handshake' : 'truck') + esc(o.method || '') + '</span>' +
             '<span class="price">' + money(o.total) + '</span>' +
           '</header>' +
-          '<p class="order-meta">' + esc(when) + '　｜　共 ' + qty + ' 件商品</p>' +
+          '<p class="order-meta">' + esc(when) + '　｜　共 ' + qty + ' 件商品' +
+          (o.discount > 0 ? '　｜　折價券 -' + money(o.discount) : '') + '</p>' +
           '<details class="acc order-detail"><summary>看訂單明細</summary>' +
             '<div class="acc-body"><ul class="order-items">' + items + '</ul>' +
             '<label class="sr-only" for="order-text-' + i + '">訂單內容</label>' +
@@ -1832,6 +2109,7 @@
     else if (page === 'cart') { initCart(); }
     else if (page === 'orders') { initOrders(); }
     else if (page === 'helper') { initHelper(); }
+    else if (page === 'lucky') { initLucky(); }
     else if (page === 'about') { initAbout(); }
 
     updateBadge();
