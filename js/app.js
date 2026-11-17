@@ -463,6 +463,7 @@
     }).join('');
     var nav = navLink('index.html', '首頁', page === 'home') +
       navLink('products.html', '全部商品', page === 'products') +
+      navLink('helper.html', '選購小幫手', page === 'helper') +
       '<li><details class="nav-dd"><summary>商品分類</summary>' +
       '<ul class="nav-dd-menu">' + dd + '</ul></details></li>' +
       navLink('guide.html', '購物須知', page === 'guide') +
@@ -501,6 +502,7 @@
       '</ul></div>' +
       '<div class="footer-col"><h3>快速連結</h3><div class="footer-links">' +
         '<a href="index.html">首頁</a><a href="products.html">全部商品</a>' +
+        '<a href="helper.html">選購小幫手</a>' +
         '<a href="guide.html">購物須知</a><a href="about.html">關於我們</a>' +
         '<a href="cart.html">購物車</a><a href="orders.html">訂單紀錄</a>' +
       '</div></div>' +
@@ -1410,6 +1412,229 @@
     render();
   }
 
+  /* ---------------- 選購小幫手 ---------------- */
+
+  function condRank(key) {
+    return { 'A+': 4, 'A': 3, 'B': 2, 'C': 1 }[key] || 2;
+  }
+
+  function initHelper() {
+    var form = $('#quiz-form');
+    if (!form) { return; }
+    var out = $('#quiz-result');
+    var submitted = false;
+
+    // 第一題的選項直接取用 fit.js 的用途清單，兩邊永遠一致
+    $('#quiz-uses').innerHTML = (window.FIT_USES || []).map(function (u) {
+      return '<label class="quiz-option"><input type="checkbox" name="use" value="' +
+        esc(u.key) + '">' +
+        '<span class="quiz-option-main">' + esc(u.label) + '</span>' +
+        '<span class="quiz-option-sub">' + esc(u.hint) + '</span></label>';
+    }).join('');
+
+    function pickedValue(name, fallback) {
+      var el = $('input[name="' + name + '"]:checked', form);
+      return el ? el.value : fallback;
+    }
+
+    function readAnswers() {
+      var budgetKey = pickedValue('budget', 'any');
+      var range = { min: 0, max: 0 };
+      if (budgetKey !== 'any') {
+        var parts = budgetKey.split('-');
+        range.min = Number(parts[0]) || 0;
+        range.max = Number(parts[1]) || 0;
+      }
+      return {
+        uses: $$('input[name="use"]:checked', form).map(function (el) { return el.value; }),
+        type: pickedValue('type', 'any'),
+        care: pickedValue('care', 'price'),
+        budgetKey: budgetKey,
+        budget: range
+      };
+    }
+
+    // 候選機器：有庫存的電腦，依照類型（與預算）過濾
+    function candidates(a, ignoreBudget) {
+      return PRODUCTS.filter(function (p) {
+        if (p.stock <= 0) { return false; }
+        if (p.category !== 'laptop' && p.category !== 'desktop') { return false; }
+        if (a.type !== 'any' && p.category !== a.type) { return false; }
+        if (!ignoreBudget) {
+          if (a.budget.min && p.price < a.budget.min) { return false; }
+          if (a.budget.max && p.price > a.budget.max) { return false; }
+        }
+        return true;
+      });
+    }
+
+    function rank(items, a) {
+      var maxPrice = 1;
+      items.forEach(function (p) { maxPrice = Math.max(maxPrice, p.price); });
+      var scored = [];
+      items.forEach(function (p) {
+        var fit = fitnessOf(p);
+        if (fit.kind !== 'computer') { return; }
+        var picked = a.uses.length
+          ? fit.uses.filter(function (u) { return a.uses.indexOf(u.key) >= 0; })
+          : fit.uses;
+        var min = 5, sum = 0;
+        picked.forEach(function (u) { min = Math.min(min, u.score); sum += u.score; });
+        // 勾了用途卻有一項跑不動就不推薦，免得客人買回去失望
+        if (a.uses.length && min <= 2) { return; }
+        var avg = sum / picked.length;
+        var score = avg * 10;
+        if (a.care === 'price') { score += (1 - p.price / maxPrice) * 6; }
+        if (a.care === 'power') { score += avg * 2; }
+        if (a.care === 'look') { score += condRank(p.condition) * 1.6; }
+        if (a.care === 'warranty') { score += Math.min(p.warrantyDays, 30) / 30 * 6; }
+        scored.push({ p: p, fit: fit, picked: picked, avg: avg, score: score });
+      });
+      scored.sort(function (x, y) { return y.score - x.score; });
+      return scored;
+    }
+
+    // 第一名的推薦理由，直接回答客人「最在意的那一點」
+    function topReason(entry, a) {
+      if (a.care === 'price') { return '在符合你需求的機器裡，這台最便宜。'; }
+      if (a.care === 'power') { return '在符合你需求的機器裡，這台跑起來最順。'; }
+      if (a.care === 'look') {
+        var c = conditionMeta(entry.p.condition);
+        return '成色 ' + c.key + '（' + c.name + '），是這幾台裡外觀最好的。';
+      }
+      return entry.p.warrantyDays > 0
+        ? '保固 ' + entry.p.warrantyDays + ' 天，是這幾台裡最長的。'
+        : '這台在你的條件裡整體最合適。';
+    }
+
+    // 第二、三名就講它跟第一名的差別在哪
+    function altReason(entry, top) {
+      if (entry.p.price < top.p.price) {
+        return '比最推薦的那台便宜 ' + money(top.p.price - entry.p.price) + '。';
+      }
+      if (entry.avg > top.avg) { return '效能比最推薦的那台再好一點。'; }
+      if (condRank(entry.p.condition) > condRank(top.p.condition)) {
+        return '外觀成色比最推薦的那台更好。';
+      }
+      if (entry.p.warrantyDays > top.p.warrantyDays) {
+        return '保固比最推薦的那台更長。';
+      }
+      return '另一個同樣合適的選擇。';
+    }
+
+    var RANK_LABEL = ['最推薦', '第二選擇', '第三選擇'];
+
+    function recCard(entry, index, top, a) {
+      var meters = entry.picked.map(function (u) {
+        return '<li class="fit-row"><span class="fit-label">' + esc(u.label) + '</span>' +
+          meterHTML(u.score) + '</li>';
+      }).join('');
+      return '<li class="rec-item">' +
+        '<div class="rec-card">' +
+          '<span class="rec-rank' + (index === 0 ? ' is-top' : '') + '">' +
+            RANK_LABEL[index] + '</span>' +
+          productCard(entry.p) +
+        '</div>' +
+        '<div class="rec-why panel panel-pad">' +
+          '<h3>為什麼推薦這台</h3>' +
+          '<p class="rec-reason">' +
+            esc(index === 0 ? topReason(entry, a) : altReason(entry, top)) + '</p>' +
+          '<ul class="fit-list">' + meters + '</ul>' +
+          '<p class="hint">' + esc(entry.fit.basis) + '</p>' +
+          '<p style="margin:14px 0 0"><a class="btn btn-ghost btn-sm" href="product.html?id=' +
+            encodeURIComponent(entry.p.id) + '">看完整規格與照片</a></p>' +
+        '</div></li>';
+    }
+
+    function answerSummary(a) {
+      var parts = [];
+      if (a.uses.length) {
+        parts.push((window.FIT_USES || []).filter(function (u) {
+          return a.uses.indexOf(u.key) >= 0;
+        }).map(function (u) { return u.label; }).join('、'));
+      }
+      parts.push({ laptop: '筆記型電腦', desktop: '桌上型主機', any: '筆電或桌機都可以' }[a.type]);
+      parts.push({
+        '0-5000': '5,000 元以內', '5000-10000': '5,000～10,000 元',
+        '10000-20000': '10,000～20,000 元', '20000-0': '20,000 元以上', any: '預算還不確定'
+      }[a.budgetKey]);
+      parts.push({
+        price: '最在意便宜', power: '最在意跑得順',
+        look: '最在意外觀', warranty: '最在意保固'
+      }[a.care]);
+      return parts.join('｜');
+    }
+
+    function moreLink(a) {
+      var qs = [];
+      if (a.uses.length) { qs.push('use=' + a.uses.join(',')); }
+      if (a.type !== 'any') { qs.push('category=' + a.type); }
+      if (a.budget.min) { qs.push('min=' + a.budget.min); }
+      if (a.budget.max) { qs.push('max=' + a.budget.max); }
+      qs.push('stock=1');
+      return 'products.html?' + qs.join('&');
+    }
+
+    function run() {
+      var a = readAnswers();
+      var list = rank(candidates(a, false), a);
+      var relaxed = false;
+      if (!list.length && (a.budget.min || a.budget.max)) {
+        list = rank(candidates(a, true), a);
+        relaxed = true;
+      }
+
+      var html = '<div class="section-head" style="margin-top:36px">' +
+        '<h2 class="section-title">' +
+        (list.length ? '我們建議這 ' + Math.min(3, list.length) + ' 台' : '目前沒有完全符合的機器') +
+        '</h2><p>依照你的回答：' + esc(answerSummary(a)) + '</p></div>';
+
+      if (!list.length) {
+        html += emptyState('店裡目前沒有符合的機器',
+          '可以放寬一點條件再試一次，或是留下需求，有收到符合的機器我們會第一時間通知你。',
+          '<div class="hero-actions" style="justify-content:center">' +
+          '<a class="btn btn-primary" href="about.html#wanted">留下我想找的機型</a>' +
+          '<a class="btn btn-ghost" href="products.html">看全部商品</a></div>');
+      } else {
+        if (relaxed) {
+          html += '<div class="notes-box"><h3>稍微超出預算</h3>' +
+            '<p style="margin-bottom:0">你設定的預算內目前沒有完全符合的機器，' +
+            '下面是最接近的幾台，價格稍微高一點。</p></div>';
+        }
+        var top = list[0];
+        html += '<ol class="rec-list">' + list.slice(0, 3).map(function (entry, i) {
+          return recCard(entry, i, top, a);
+        }).join('') + '</ol>';
+        html += '<div class="callout" style="margin-top:20px"><p>' +
+          '這是依照規格自動挑出來的建議，不是絕對答案。' +
+          '不確定哪一台適合你，直接把你的用途告訴我們，老闆會憑經驗給你意見。</p>' +
+          '<p style="margin:12px 0 0"><a class="btn btn-ghost btn-sm" href="' + moreLink(a) +
+          '">看所有符合條件的機器</a></p></div>';
+      }
+
+      out.innerHTML = html;
+      out.removeAttribute('hidden');
+      submitted = true;
+      out.scrollIntoView({ block: 'start' });
+    }
+
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      run();
+    });
+    // 已經看過結果之後，改答案就即時更新
+    form.addEventListener('change', function () {
+      if (submitted) { run(); }
+    });
+    $('#quiz-reset').addEventListener('click', function () {
+      form.reset();
+      out.setAttribute('hidden', '');
+      out.innerHTML = '';
+      submitted = false;
+      form.scrollIntoView({ block: 'start' });
+    });
+  }
+
   /* ---------------- 關於我們：兩張表單（收購詢價／找機器需求單） ---------------- */
 
   // 產生 mailto 連結，讓客人一鍵開啟郵件軟體，收件者與內容都先填好
@@ -1538,6 +1763,7 @@
     else if (page === 'product') { initProduct(); }
     else if (page === 'cart') { initCart(); }
     else if (page === 'orders') { initOrders(); }
+    else if (page === 'helper') { initHelper(); }
     else if (page === 'about') { initAbout(); }
 
     updateBadge();
