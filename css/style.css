@@ -333,6 +333,33 @@ main { display: block; min-height: 50vh; }
 }
 .empty-state .icon { width: 44px; height: 44px; color: var(--text-dim); margin: 0 auto 12px; }
 
+/* ---------- 這台適合做什麼 ---------- */
+.fit-panel { margin-bottom: 8px; }
+.fit-verdict {
+  margin: 0 0 16px; padding: 12px 14px;
+  background: var(--surface-2); border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm); font-size: 1.02rem; line-height: 1.6;
+}
+.fit-list { display: grid; gap: 2px; }
+.fit-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 11px 2px; border-bottom: 1px solid var(--border);
+}
+.fit-row:last-child { border-bottom: 0; }
+.fit-label { display: flex; flex-direction: column; font-weight: 600; }
+.fit-label small { color: var(--text-dim); font-weight: 400; font-size: .8rem; margin-top: 2px; }
+.fit-value { color: var(--accent); font-size: 1rem; white-space: nowrap; }
+.fit-meter { display: inline-flex; gap: 6px; flex: none; }
+.fit-dot {
+  width: 11px; height: 11px; border-radius: 999px;
+  border: 1px solid var(--border); background: transparent;
+}
+.fit-meter.is-high .fit-dot.on { background: var(--accent); border-color: var(--accent); }
+.fit-meter.is-mid .fit-dot.on { background: var(--accent-2); border-color: var(--accent-2); }
+.fit-meter.is-low .fit-dot.on { background: var(--text-dim); border-color: var(--text-dim); }
+.fit-note { margin: 14px 0 0; }
+.fit-tags { margin-top: 2px; }
+
 /* ---------- 商品照片相簿 ---------- */
 .gallery { display: grid; gap: 12px; }
 .gallery-main {
@@ -668,6 +695,8 @@ fieldset { border: 0; margin: 0; padding: 0; }
   .nav-list a, .nav-dd > summary { padding: 12px 10px; font-size: 1rem; }
   .nav-dd-menu { position: static; box-shadow: none; margin: 4px 0 4px 12px; }
   .detail-layout { grid-template-columns: 1fr; }
+  .fit-row { align-items: flex-start; gap: 10px; }
+  .fit-dot { width: 10px; height: 10px; }
   .gallery-thumb { width: 72px; height: 56px; }
   .lightbox { padding: 64px 8px; }
   .lightbox img { max-height: 70vh; }

@@ -205,6 +205,65 @@
 
   /* ---------------- 共用畫面片段 ---------------- */
 
+  // 取得「這台適合做什麼」的評估（fit.js 提供，載入失敗時回傳空結果）
+  function fitnessOf(p) {
+    return typeof window.getFitness === 'function' ? window.getFitness(p) : { kind: 'none' };
+  }
+
+  // 五顆點的程度條
+  function meterHTML(score) {
+    var cls = score >= 4 ? 'is-high' : (score >= 3 ? 'is-mid' : 'is-low');
+    var dots = '';
+    for (var i = 1; i <= 5; i++) {
+      dots += '<span class="fit-dot' + (i <= score ? ' on' : '') + '"></span>';
+    }
+    return '<span class="fit-meter ' + cls + '" role="img" aria-label="5 分中的 ' +
+      score + ' 分">' + dots + '</span>';
+  }
+
+  // 商品卡上的「適合」小標籤（最多三個）
+  function fitTagsHTML(p) {
+    var fit = fitnessOf(p);
+    if (fit.kind !== 'computer' || !fit.good.length) { return ''; }
+    return '<div class="tag-row fit-tags">' + fit.good.slice(0, 3).map(function (u) {
+      return '<span class="tag tag-ok">' + icon('check') + esc(u.short) + '</span>';
+    }).join('') + '</div>';
+  }
+
+  // 商品詳情頁的「這台適合做什麼」區塊
+  function fitPanelHTML(p) {
+    var fit = fitnessOf(p);
+    if (fit.kind === 'computer') {
+      var rows = fit.uses.map(function (u) {
+        return '<li class="fit-row">' +
+          '<span class="fit-label">' + esc(u.label) +
+          '<small>' + esc(u.hint) + '</small></span>' +
+          meterHTML(u.score) + '</li>';
+      }).join('');
+      return '<section class="panel panel-pad fit-panel">' +
+        '<h2 class="section-title" style="font-size:1.2rem">這台適合做什麼？</h2>' +
+        '<p class="fit-verdict">' + esc(fit.verdict) + '</p>' +
+        '<ul class="fit-list">' + rows + '</ul>' +
+        '<p class="hint fit-note">依照這台的規格（' + esc(fit.basis) +
+        '）自動評估的參考值，不是實測跑分。' +
+        '不確定夠不夠用，直接問我們，我們會老實說。</p>' +
+        '</section>';
+    }
+    if (fit.kind === 'screen') {
+      var lines = fit.notes.map(function (n) {
+        return '<li class="fit-row"><span class="fit-label">' + esc(n.label) +
+          '<small>' + esc(n.note) + '</small></span>' +
+          '<strong class="fit-value">' + esc(n.value) + '</strong></li>';
+      }).join('');
+      return '<section class="panel panel-pad fit-panel">' +
+        '<h2 class="section-title" style="font-size:1.2rem">這台放在哪裡剛剛好？</h2>' +
+        '<ul class="fit-list">' + lines + '</ul>' +
+        '<p class="hint fit-note">建議值供參考，實際還是看你的空間與習慣。</p>' +
+        '</section>';
+    }
+    return '';
+  }
+
   // 取出商品的照片清單：支援 images 陣列（多張），也相容舊的 image 單張欄位
   function photosOf(p) {
     if (Array.isArray(p.images)) {
@@ -374,6 +433,7 @@
         '<h3 class="card-title"><a href="product.html?id=' + encodeURIComponent(p.id) + '">' +
           esc(p.name) + '</a></h3>' +
         '<ul class="card-spec">' + specs + '</ul>' +
+        fitTagsHTML(p) +
         '<div class="card-foot">' + priceRow(p) + btn + '</div>' +
       '</div></article>';
   }
@@ -726,6 +786,13 @@
           '<span class="check-count">' + n + '</span></label>';
       }).join('') + '</div>' +
 
+      '<div class="filter-group"><h3>我要拿來做什麼</h3>' +
+      '<p class="hint" style="margin:-4px 0 8px">勾起來只會顯示跑得動的機器</p>' +
+      (window.FIT_USES || []).map(function (u) {
+        return '<label class="check"><input type="checkbox" name="use" value="' + u.key + '">' +
+          '<span>' + esc(u.label) + '</span></label>';
+      }).join('') + '</div>' +
+
       '<div class="filter-group"><h3>其他條件</h3>' +
       '<label class="check"><input type="checkbox" name="warranty" value="1"><span>只看有保固</span></label>' +
       '<label class="check"><input type="checkbox" name="stock" value="1"><span>只看有庫存</span></label>' +
@@ -746,6 +813,7 @@
       var q = parseQuery();
       return {
         cats: q.category ? q.category.split(',').filter(Boolean) : [],
+        uses: q.use ? q.use.split(',').filter(Boolean) : [],
         conds: q.condition ? q.condition.split(',').filter(Boolean) : [],
         min: q.min || '',
         max: q.max || '',
@@ -759,6 +827,7 @@
     function stateToQuery(s) {
       var parts = [];
       if (s.cats.length) { parts.push('category=' + s.cats.join(',')); }
+      if (s.uses.length) { parts.push('use=' + s.uses.join(',')); }
       if (s.conds.length) { parts.push('condition=' + s.conds.map(encodeURIComponent).join(',')); }
       if (s.min) { parts.push('min=' + encodeURIComponent(s.min)); }
       if (s.max) { parts.push('max=' + encodeURIComponent(s.max)); }
@@ -789,6 +858,9 @@
       $$('input[name="condition"]', form).forEach(function (el) {
         el.checked = s.conds.indexOf(el.value) >= 0;
       });
+      $$('input[name="use"]', form).forEach(function (el) {
+        el.checked = s.uses.indexOf(el.value) >= 0;
+      });
       $('#price-min', form).value = s.min;
       $('#price-max', form).value = s.max;
       $('input[name="warranty"]', form).checked = s.warranty;
@@ -800,6 +872,7 @@
     function formToState() {
       return {
         cats: $$('input[name="category"]:checked', form).map(function (el) { return el.value; }),
+        uses: $$('input[name="use"]:checked', form).map(function (el) { return el.value; }),
         conds: $$('input[name="condition"]:checked', form).map(function (el) { return el.value; }),
         min: $('#price-min', form).value,
         max: $('#price-max', form).value,
@@ -812,6 +885,20 @@
 
     function matches(p, s) {
       if (s.cats.length && s.cats.indexOf(p.category) < 0) { return false; }
+      if (s.uses.length) {
+        // 勾了用途就只留跑得動的電腦（4 分以上），電視與零組件不列入
+        var fit = fitnessOf(p);
+        if (fit.kind !== 'computer') { return false; }
+        var ok = true;
+        s.uses.forEach(function (key) {
+          var hit = false;
+          fit.uses.forEach(function (u) {
+            if (u.key === key && u.score >= 4) { hit = true; }
+          });
+          if (!hit) { ok = false; }
+        });
+        if (!ok) { return false; }
+      }
       if (s.conds.length && s.conds.indexOf(p.condition) < 0) { return false; }
       if (s.min !== '' && p.price < Number(s.min)) { return false; }
       if (s.max !== '' && p.price > Number(s.max)) { return false; }
@@ -972,7 +1059,8 @@
         '</div>' +
       '</div>' +
       '<div class="section">' +
-        '<h2 class="section-title">完整規格</h2>' +
+        fitPanelHTML(p) +
+        '<h2 class="section-title" style="margin-top:28px">完整規格</h2>' +
         '<div class="panel"><table class="spec-table"><caption class="sr-only">' +
           esc(p.name) + ' 規格表</caption><tbody>' + specRows + '</tbody></table></div>' +
         (highlights ? '<h2 class="section-title" style="margin-top:28px">本機賣點</h2>' +
