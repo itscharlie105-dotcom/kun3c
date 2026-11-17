@@ -49,6 +49,10 @@ window.SITE_CONFIG = {
   // Email：點擊可直接開啟郵件軟體
   email: 'itscharlie105@gmail.com',
 
+  // 各成色的標準保固天數（公開在購物說明頁）
+  // 商品標示的天數比這裡少時，網站會自動補到標準天數，避免承諾打折
+  warrantyByCondition: { 'A+': 30, 'A': 30, 'B': 14, 'C': 7 },
+
   // 檢測人員：顯示在每台機器的檢測報告上
   inspector: '店長阿坤',
 

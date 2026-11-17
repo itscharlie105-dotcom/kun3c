@@ -505,6 +505,19 @@ main { display: block; min-height: 50vh; }
 .detail-meta { display: grid; gap: 10px; margin: 18px 0; }
 .detail-meta div { display: flex; gap: 10px; align-items: center; color: var(--text-dim); font-size: .94rem; }
 .detail-meta strong { color: var(--text); font-weight: 600; }
+.detail-meta small { display: block; font-size: .82rem; margin-top: 3px; }
+
+/* 一行減碳說明：放在購買按鈕下面，不搶主要動線 */
+.eco-line {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin: 16px 0 0; padding: 12px 14px;
+  background: rgba(52, 211, 153, .07);
+  border: 1px solid rgba(52, 211, 153, .28);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim); font-size: .9rem; line-height: 1.65;
+}
+.eco-line .icon { flex: none; color: var(--ok); margin-top: 2px; }
+.eco-line strong { color: var(--text); }
 .qty {
   display: inline-flex; align-items: center;
   border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;
@@ -534,6 +547,10 @@ main { display: block; min-height: 50vh; }
 .spec-table th, .spec-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); text-align: left; }
 .spec-table th { width: 34%; color: var(--text-dim); font-weight: 600; background: var(--surface); }
 .spec-table tr:last-child th, .spec-table tr:last-child td { border-bottom: 0; }
+.cond-table thead th { width: auto; }
+.cond-table tbody th { width: 27%; }
+.cond-table .cond-warranty { white-space: nowrap; font-weight: 600; color: var(--ok); }
+
 .panel {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); overflow: hidden;
@@ -811,6 +828,9 @@ fieldset { border: 0; margin: 0; padding: 0; }
   .order-card-head .price { margin-left: 0; width: 100%; }
   .section-title { font-size: 1.35rem; }
   .quiz-options { grid-template-columns: 1fr; }
+  .cond-table th, .cond-table td { padding: 9px 8px; font-size: .86rem; }
+  /* 窄螢幕時成色標籤會換行，圓角太大會變成圓圈，改成方角比較好讀 */
+  .cond-table .cond { border-radius: var(--radius-sm); }
   .owner-photo { height: 470px; }
   .owner-text .hero-actions .btn { width: 100%; }
   .cta-band .btn { width: 100%; }

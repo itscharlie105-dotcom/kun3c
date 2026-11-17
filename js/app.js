@@ -428,14 +428,26 @@
     });
   }
 
+  // 這個成色的標準保固天數（設定檔沒寫就回 0，等於不啟用這個制度）
+  function standardWarranty(cond) {
+    var map = CFG.warrantyByCondition || {};
+    return Number(map[cond]) || 0;
+  }
+
+  // 這台實際的保固天數：以成色的標準保固為下限，商品標更久就用商品標的
+  function warrantyOf(p) {
+    return Math.max(Number(p.warrantyDays) || 0, standardWarranty(p.condition));
+  }
+
   function condBadge(p) {
     var c = conditionMeta(p.condition);
     return '<span class="cond ' + c.cls + '">' + esc(c.key) + ' ' + esc(c.name) + '</span>';
   }
 
   function warrantyTag(p) {
-    if (p.warrantyDays > 0) {
-      return '<span class="tag tag-ok">' + icon('shield') + '保固 ' + p.warrantyDays + ' 天</span>';
+    var days = warrantyOf(p);
+    if (days > 0) {
+      return '<span class="tag tag-ok">' + icon('shield') + '保固 ' + days + ' 天</span>';
     }
     return '<span class="tag">無保固</span>';
   }
@@ -951,7 +963,7 @@
       if (s.conds.length && s.conds.indexOf(p.condition) < 0) { return false; }
       if (s.min !== '' && p.price < Number(s.min)) { return false; }
       if (s.max !== '' && p.price > Number(s.max)) { return false; }
-      if (s.warranty && !(p.warrantyDays > 0)) { return false; }
+      if (s.warranty && !(warrantyOf(p) > 0)) { return false; }
       if (s.stock && p.stock <= 0) { return false; }
       if (s.q) {
         var hay = [p.name, p.brand].concat(
@@ -1086,7 +1098,11 @@
             esc(c.desc) + '</p>' +
           '<div class="detail-meta">' +
             '<div>' + icon('shield') + '<span>保固：<strong>' +
-              (p.warrantyDays > 0 ? p.warrantyDays + ' 天店家保固' : '本件無保固') + '</strong></span></div>' +
+              (warrantyOf(p) > 0 ? warrantyOf(p) + ' 天店家保固' : '本件無保固') + '</strong>' +
+              (standardWarranty(p.condition) > 0
+                ? '<small>成色 ' + esc(c.key) + ' 的標準保固是 ' +
+                  standardWarranty(p.condition) + ' 天　<a href="guide.html#warranty">看保固規則</a></small>'
+                : '') + '</span></div>' +
             '<div>' + icon('box') + '<span>庫存：<strong>' +
               (sold ? '已售出' : '尚有 ' + p.stock + ' 件') + '</strong></span></div>' +
             '<div>' + icon('truck') + '<span>取貨：<strong>' + esc(CFG.delivery || '') +
@@ -1105,6 +1121,10 @@
               '</div>') +
           '<div class="buy-row">' + contactButton('btn btn-contact', '直接用 {管道} 詢問這台') +
             '<a class="btn btn-ghost" href="cart.html">前往購物車</a></div>' +
+          '<p class="eco-line">' + icon('leaf') +
+            '<span><strong>買這台，等於少製造一台。</strong>電腦的碳排放大多發生在製造階段，' +
+            '讓還能用的機器繼續被使用，就不用再排一次。' +
+            '<a href="guide.html#eco">看估算與出處</a></span></p>' +
         '</div>' +
       '</div>' +
       '<div class="section">' +
@@ -1535,7 +1555,7 @@
         if (a.care === 'price') { score += (1 - p.price / maxPrice) * 6; }
         if (a.care === 'power') { score += avg * 2; }
         if (a.care === 'look') { score += condRank(p.condition) * 1.6; }
-        if (a.care === 'warranty') { score += Math.min(p.warrantyDays, 30) / 30 * 6; }
+        if (a.care === 'warranty') { score += Math.min(warrantyOf(p), 30) / 30 * 6; }
         scored.push({ p: p, fit: fit, picked: picked, avg: avg, score: score });
       });
       scored.sort(function (x, y) { return y.score - x.score; });
@@ -1550,8 +1570,8 @@
         var c = conditionMeta(entry.p.condition);
         return '成色 ' + c.key + '（' + c.name + '），是這幾台裡外觀最好的。';
       }
-      return entry.p.warrantyDays > 0
-        ? '保固 ' + entry.p.warrantyDays + ' 天，是這幾台裡最長的。'
+      return warrantyOf(entry.p) > 0
+        ? '保固 ' + warrantyOf(entry.p) + ' 天，是這幾台裡最長的。'
         : '這台在你的條件裡整體最合適。';
     }
 
@@ -1564,7 +1584,7 @@
       if (condRank(entry.p.condition) > condRank(top.p.condition)) {
         return '外觀成色比最推薦的那台更好。';
       }
-      if (entry.p.warrantyDays > top.p.warrantyDays) {
+      if (warrantyOf(entry.p) > warrantyOf(top.p)) {
         return '保固比最推薦的那台更長。';
       }
       return '另一個同樣合適的選擇。';
@@ -1815,7 +1835,21 @@
     else if (page === 'about') { initAbout(); }
 
     updateBadge();
+    openHashSection();
   }
+
+  // 用 #id 連到購物說明頁的某一節時，自動把那一節展開
+  function openHashSection() {
+    var id = (location.hash || '').slice(1);
+    if (!id) { return; }
+    var el = document.getElementById(id);
+    if (el && el.tagName === 'DETAILS') {
+      el.open = true;
+      el.scrollIntoView();
+    }
+  }
+
+  window.addEventListener('hashchange', openHashSection);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);

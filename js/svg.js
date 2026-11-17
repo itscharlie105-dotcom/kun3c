@@ -217,6 +217,8 @@
     facebook: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M16 7.5h-1.6A1.9 1.9 0 0 0 12.5 9.4V21"/><path d="M9.8 12.8h5"/>',
     check: '<path d="M4 12.5l5 5L20 6"/>',
     camera: '<path d="M3 7h3.5l1.5-2h8l1.5 2H21v12H3z"/><circle cx="12" cy="12.5" r="3.6"/>',
+    leaf: '<path d="M4.5 19.5C3 13 7.5 5.5 19.5 4.5c1 12-6.5 16.5-13 15z"/>' +
+      '<path d="M4.5 19.5C8 14 11.5 11.5 16 10"/>',
     'chevron-left': '<path d="M15 5l-7 7 7 7"/>',
     'chevron-right': '<path d="M9 5l7 7-7 7"/>'
   };

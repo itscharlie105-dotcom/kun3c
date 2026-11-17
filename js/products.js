@@ -190,7 +190,7 @@ window.PRODUCTS = [
     price: 6500,
     originalPrice: 19900,
     condition: 'B',
-    warrantyDays: 7,
+    warrantyDays: 14,
     stock: 3,
     specs: [
       { label: 'CPU', value: 'Intel i3-1115G4' },
@@ -472,7 +472,7 @@ window.PRODUCTS = [
     price: 6800,
     originalPrice: 12900,
     condition: 'A',
-    warrantyDays: 14,
+    warrantyDays: 30,
     stock: 2,
     specs: [
       { label: '核心', value: 'GeForce RTX 3060' },
@@ -495,7 +495,7 @@ window.PRODUCTS = [
     price: 4500,
     originalPrice: null,
     condition: 'B',
-    warrantyDays: 7,
+    warrantyDays: 14,
     stock: 1,
     specs: [
       { label: '核心', value: 'GeForce RTX 2060 SUPER' },
@@ -518,7 +518,7 @@ window.PRODUCTS = [
     price: 3200,
     originalPrice: 5990,
     condition: 'A+',
-    warrantyDays: 14,
+    warrantyDays: 30,
     stock: 3,
     specs: [
       { label: '核心', value: '6 核 12 執行緒' },

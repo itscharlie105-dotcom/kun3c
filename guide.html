@@ -45,27 +45,39 @@
           <summary>一、成色分級完整說明</summary>
           <div class="acc-body">
             <p>每一台機器上架前都會由我們親自評定成色，標準如下。成色只代表<strong>外觀</strong>狀況，所有商品功能都必須正常才會上架。</p>
-            <table class="spec-table">
-              <caption class="sr-only">成色分級對照表</caption>
+            <table class="spec-table cond-table">
+              <caption class="sr-only">成色分級與標準保固對照表</caption>
+              <thead>
+                <tr><th scope="col">成色</th><th scope="col">外觀狀況</th><th scope="col">標準保固</th></tr>
+              </thead>
               <tbody>
                 <tr><th scope="row"><span class="cond cond-ap">A+ 近全新</span></th>
-                    <td>幾乎無使用痕跡，外觀接近新品，多為展示機或極少使用的機器。</td></tr>
+                    <td>幾乎無使用痕跡，外觀接近新品，多為展示機或極少使用的機器。</td>
+                    <td class="cond-warranty">30 天</td></tr>
                 <tr><th scope="row"><span class="cond cond-a">A 良好</span></th>
-                    <td>輕微痕跡，正常使用距離不易察覺，是最多人選擇的成色。</td></tr>
+                    <td>輕微痕跡，正常使用距離不易察覺，是最多人選擇的成色。</td>
+                    <td class="cond-warranty">30 天</td></tr>
                 <tr><th scope="row"><span class="cond cond-b">B 使用痕跡明顯</span></th>
-                    <td>功能完全正常，外觀有刮痕或掉漆，適合預算有限、不在意外觀的人。</td></tr>
+                    <td>功能完全正常，外觀有刮痕或掉漆，適合預算有限、不在意外觀的人。</td>
+                    <td class="cond-warranty">14 天</td></tr>
                 <tr><th scope="row"><span class="cond cond-c">C 外觀瑕疵品</span></th>
-                    <td>功能正常，外觀有明顯損傷（壓痕、凹陷、泛黃等），價格最優惠。</td></tr>
+                    <td>功能正常，外觀有明顯損傷（壓痕、凹陷、泛黃等），價格最優惠。</td>
+                    <td class="cond-warranty">7 天</td></tr>
               </tbody>
             </table>
-            <p style="margin-top:14px">每件商品的詳情頁都會有一段<strong>誠實說明</strong>，把刮痕位置、電池健康度等缺點寫出來，請務必看完再下單。</p>
+            <p style="margin-top:14px"><strong>成色不只是標籤，是保固承諾。</strong>
+              上面的天數是我們對每一個成色的最低承諾，不是看機器狀況隨便給的。
+              同一個成色就是同一個保固天數，個別機器如果我們願意保更久，商品頁會標更長的天數，但<strong>絕不會比上表更短</strong>。</p>
+            <p>每件商品的詳情頁都會有一段<strong>誠實說明</strong>，把刮痕位置、電池健康度等缺點寫出來，請務必看完再下單。</p>
           </div>
         </details>
 
-        <details class="acc">
+        <details class="acc" id="warranty">
           <summary>二、保固範圍與不保固的情形</summary>
           <div class="acc-body">
-            <p><strong>保固天數以每件商品標示為準</strong>（0 天＝無保固，最長 30 天），保固起算日為面交當天或宅配簽收日。</p>
+            <p><strong>保固天數由成色決定</strong>：A+ 與 A 成色保固 30 天、B 成色 14 天、C 成色 7 天，
+              保固起算日為面交當天或宅配簽收日。商品頁會直接標出這一台的天數，
+              標示的天數只會等於或多於上面的標準。</p>
             <p><strong>保固範圍：</strong></p>
             <ul>
               <li>非人為因素造成的硬體故障（無法開機、主機板故障、硬碟損壞等）。</li>
@@ -169,6 +181,21 @@
         </details>
 
       </div>
+
+      <section class="panel panel-pad" id="eco" style="margin-top:24px">
+        <h2 class="section-title" style="font-size:1.2rem;margin:0 0 10px">買二手，為什麼算減碳？</h2>
+        <p>一台電腦的碳排放，<strong>大部分不是用電用掉的，而是製造的時候就排掉了</strong>——
+          挖礦、煉金屬、做晶片、組裝、運送，在它開機之前就已經發生。
+          所以讓一台還能用的機器繼續被使用，省下的是「再製造一台」的那份碳，
+          這是任何省電設定都做不到的。</p>
+        <p>法國官方的環境與能源管理署（ADEME）在 2022 年的研究估算，
+          買整新／二手的電子產品而不是買全新，每年可以少掉 <strong>43%～97%</strong> 的環境衝擊，
+          差距取決於產品種類、整修時換了多少新零件，以及機器因此多用了幾年。
+          換掉的零件越多、延長的年限越短，減碳效果就越小——這也是我們盡量修、而不是整組換新的原因。</p>
+        <p class="hint">出處：ADEME《Évaluation de l'impact environnemental d'un ensemble de produits
+          reconditionnés》（2022 年 9 月）。我們沒有辦法為每一台機器單獨算碳足跡，
+          上面是研究的區間估算，不是這一台的實測值，寫在這裡是希望你知道數字從哪裡來。</p>
+      </section>
 
       <div class="callout" style="margin-top:24px">
         <p>還有其他問題嗎？營業時間 <span data-cfg="hours"></span>，歡迎直接聯絡我們。</p>

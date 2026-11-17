@@ -113,7 +113,9 @@
           <div class="field">
             <label for="f-warranty">保固天數</label>
             <input class="input" type="number" id="f-warranty" min="0" step="1" inputmode="numeric" value="30">
-            <p class="hint">沒有保固就填 0。</p>
+            <p class="hint">選好成色就會自動帶入標準天數（A+／A 30 天、B 14 天、C 7 天）。
+              想保更久可以改大；<strong>改小沒有用</strong>，網站會自動補回標準天數，
+              因為這是購物說明頁上對客人的承諾。</p>
           </div>
 
           <div class="field">
@@ -310,6 +312,12 @@
 
   // 依分類給一個預設的示意圖樣式
   var KIND = { laptop: 'laptop', desktop: 'desktop', tv: 'tv', parts: 'gpu' };
+
+  // 這個成色的標準保固天數（跟網站用同一份設定）
+  function stdWarranty(cond) {
+    var map = CFG.warrantyByCondition || {};
+    return Number(map[cond]) || 0;
+  }
 
   // 產生檢測項目的輸入列
   function buildInspectRows() {
@@ -536,7 +544,8 @@
       price: Number($('#f-price').value) || 0,
       originalPrice: $('#f-original').value ? Number($('#f-original').value) : null,
       condition: $('#f-condition').value,
-      warrantyDays: Number($('#f-warranty').value) || 0,
+      warrantyDays: Math.max(Number($('#f-warranty').value) || 0,
+        stdWarranty($('#f-condition').value)),
       stock: Number($('#f-stock').value) || 0,
       specs: specs,
       highlights: $('#f-highlights').value.split('\n').map(function (t) {
@@ -562,6 +571,12 @@
     $('#f-ins-date').value = today();
     $('#f-name').focus();
     window.setTimeout(function () { $('#add-msg').textContent = ''; }, 6000);
+  });
+
+  // 換成色就把保固天數帶成該成色的標準
+  $('#f-condition').addEventListener('change', function () {
+    var std = stdWarranty(this.value);
+    if (std > 0) { $('#f-warranty').value = std; }
   });
 
   $('#reset-form').addEventListener('click', function () {
@@ -681,7 +696,8 @@
     out.push('💰 售價：' + money(p.price) +
       (p.originalPrice ? '（原價 ' + money(p.originalPrice) + '）' : ''));
     out.push('🔎 成色：' + (COND_NAME[p.condition] || p.condition));
-    out.push('🛡 保固：' + (p.warrantyDays > 0 ? p.warrantyDays + ' 天店家保固' : '本件無保固'));
+    var wd = Math.max(Number(p.warrantyDays) || 0, stdWarranty(p.condition));
+    out.push('🛡 保固：' + (wd > 0 ? wd + ' 天店家保固' : '本件無保固'));
     out.push('📦 庫存：' + (p.stock > 0 ? '尚有 ' + p.stock + ' 件' : '已售出'));
     if (withLink && siteUrl()) {
       out.push('');
@@ -709,7 +725,9 @@
         return String(s2.value).replace(/（[^）]*）/g, '').replace(/\([^)]*\)/g, '').trim();
       }).filter(Boolean).join('／');
       var tail = '成色 ' + (COND_NAME[p.condition] || p.condition) +
-        '｜' + (p.warrantyDays > 0 ? '保固 ' + p.warrantyDays + ' 天' : '無保固');
+        '｜' + (Math.max(Number(p.warrantyDays) || 0, stdWarranty(p.condition)) > 0
+          ? '保固 ' + Math.max(Number(p.warrantyDays) || 0, stdWarranty(p.condition)) + ' 天'
+          : '無保固');
       out.push('　　' + (brief ? brief + '｜' : '') + tail);
     });
     out.push('');
