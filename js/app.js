@@ -775,7 +775,7 @@
           '<div class="cat-media" role="img" aria-label="' + esc(c.name) + '圖示">' +
           productSVG(c.kind) + '</div>' +
           '<h3>' + esc(c.name) + '</h3><p>' + esc(c.desc) + '</p>' +
-          '<span class="cat-count">' + n + ' 件商品</span></a>';
+          '<span class="cat-count">' + (n ? n + ' 件商品' : '暫無現貨') + '</span></a>';
       }).join('');
     }
     // 每日抽獎入口：有券的話直接把券的狀態寫在首頁上
@@ -805,7 +805,19 @@
         if (a.createdAt === b.createdAt) { return b.price - a.price; }
         return a.createdAt < b.createdAt ? 1 : -1;
       }).slice(0, 8);
-      feat.innerHTML = list.map(productCard).join('');
+      // 架上機器不多時，不要寫「手刀要快」這種撐場面的話
+      var note = $('#featured-note');
+      var inStock = PRODUCTS.filter(function (p) { return p.stock > 0; }).length;
+      if (note && inStock < 4) {
+        note.textContent = inStock
+          ? '目前現貨 ' + inStock + ' 台。機器收進來、檢測完才會上架，所以架上一次不會很多。'
+          : '現貨剛好都賣完了。新機器檢測完就會上架，想找特定機型可以先留需求給我們。';
+      }
+      feat.innerHTML = list.length
+        ? list.map(productCard).join('')
+        : emptyState('目前沒有現貨',
+          '機器收進來、檢測完才會上架，所以有時候架上會是空的。',
+          '<a class="btn btn-primary" href="about.html#wanted">填找機器需求單</a>');
     }
   }
 
@@ -1013,15 +1025,38 @@
       });
     }
 
+    // 這組條件是不是「只選了分類」——從首頁分類卡點進來就是這種情況
+    function onlyCategory(s) {
+      return s.cats.length > 0 && !s.uses.length && !s.conds.length &&
+        s.min === '' && s.max === '' && !s.q && !s.warranty && !s.stock;
+    }
+
     function render(s) {
       var list = sortList(PRODUCTS.filter(function (p) { return matches(p, s); }), s.sort);
       countEl.textContent = '共 ' + list.length + ' 件商品';
-      grid.innerHTML = list.length
-        ? list.map(productCard).join('')
-        : emptyState('找不到符合條件的商品', '試著放寬價格區間，或是告訴我們你想找什麼機型。',
+      if (list.length) {
+        grid.innerHTML = list.map(productCard).join('');
+        return;
+      }
+      if (!PRODUCTS.length) {
+        grid.innerHTML = emptyState('目前沒有現貨',
+          '機器收進來、檢測完才會上架，所以有時候架上會是空的。' +
+          '留下你要找的機型與預算，收到符合的我們就通知你。',
+          '<div class="hero-actions" style="justify-content:center">' +
+          '<a class="btn btn-primary" href="about.html#wanted">填找機器需求單</a></div>');
+      } else if (onlyCategory(s)) {
+        grid.innerHTML = emptyState('這個分類目前沒有現貨',
+          '這一類的機器還在收、還在檢測。可以先看看其他分類，或是留下需求，收到就通知你。',
+          '<div class="hero-actions" style="justify-content:center">' +
+          '<button class="btn btn-primary" type="button" id="clear-filter-empty">看全部商品</button>' +
+          '<a class="btn btn-ghost" href="about.html#wanted">告訴我們你想找什麼</a></div>');
+      } else {
+        grid.innerHTML = emptyState('找不到符合條件的商品',
+          '試著放寬價格區間，或是告訴我們你想找什麼機型。',
           '<div class="hero-actions" style="justify-content:center">' +
           '<button class="btn btn-primary" type="button" id="clear-filter-empty">清除篩選</button>' +
           '<a class="btn btn-ghost" href="about.html#wanted">告訴我們你想找什麼</a></div>');
+      }
     }
 
     function update(fromForm) {
