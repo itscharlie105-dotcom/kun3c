@@ -170,6 +170,16 @@
     couponDays: couponDays,
     minSpendFor: minSpendFor,
 
+    // 目前設定裡最大的那個面額，給文案用（改設定時文案會自己跟著變）
+    topPrize: function () {
+      var list = prizeList();
+      var top = 0;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].amount > top) { top = list[i].amount; }
+      }
+      return top;
+    },
+
     // 目前的狀態（複製一份出去，外面改不到裡面）
     state: function () {
       var st = read();

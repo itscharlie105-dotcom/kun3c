@@ -783,6 +783,8 @@
     if (luckyBand && luckyOn()) {
       luckyBand.removeAttribute('hidden');
       var c = window.Lucky.coupon();
+      $('#home-lucky-title').textContent =
+        '每天抽一次，最高折 ' + money(window.Lucky.topPrize());
       if (c) {
         var left = window.Lucky.daysLeft(c);
         $('#home-lucky-title').textContent = '你有一張 ' + money(c.amount) + ' 折價券';
@@ -1275,7 +1277,7 @@
         row.setAttribute('hidden', '');
         note.removeAttribute('hidden');
         note.innerHTML = '還沒有折價券？<a href="lucky.html">每天可以抽一次</a>，最高折 ' +
-          money(500) + '。';
+          money(window.Lucky.topPrize()) + '。';
       }
     }
 
@@ -1494,6 +1496,8 @@
     var table = L.prizeTable();
     var spinning = false;
 
+    $('#lucky-title').textContent = '每天抽一次，最高折 ' + money(L.topPrize());
+
     // 獎項的顯示名稱（0 元就是銘謝惠顧）
     function prizeName(amount) {
       return amount > 0 ? money(amount) : '銘謝惠顧';
@@ -1531,7 +1535,7 @@
       if (!c) {
         box.innerHTML = '<div class="panel panel-pad wallet wallet--empty">' +
           '<p><strong>目前沒有折價券。</strong>抽一次看看，最高可以抽到 ' +
-          money(500) + ' 的折抵。</p></div>';
+          money(L.topPrize()) + ' 的折抵。</p></div>';
         return;
       }
       var left = L.daysLeft(c);
