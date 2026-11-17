@@ -89,7 +89,12 @@
 
   /* ---------------- 狀態讀寫 ---------------- */
   function emptyState() {
-    return { phone: '', lastDraw: '', draws: 0, best: 0, coupon: null };
+    return { phone: '', lastDraw: '', draws: 0, best: 0, streak: 0, coupon: null };
+  }
+
+  // 全勤保底的天數（0 或沒設定就等於關掉）
+  function streakDays() {
+    return Math.max(0, Number(cfg().streakGuaranteeDays) || 0);
   }
 
   function read() {
@@ -103,6 +108,7 @@
     if (typeof st.lastDraw !== 'string') { st.lastDraw = ''; }
     st.draws = Number(st.draws) || 0;
     st.best = Number(st.best) || 0;
+    st.streak = Number(st.streak) || 0;
     // 過期的券直接丟掉，不要留在資料裡混淆
     if (st.coupon && !couponAlive(st.coupon)) { st.coupon = null; }
     return st;
@@ -110,6 +116,13 @@
 
   function write(st) {
     storeSet(KEY, JSON.stringify(st));
+  }
+
+  // 這次抽完之後的連續天數：昨天有抽就累加，中斷過就從 1 重算
+  function nextStreak(st) {
+    if (!st.lastDraw) { return 1; }
+    var yesterday = dayKey(addDays(new Date(), -1));
+    return st.lastDraw === yesterday ? st.streak + 1 : 1;
   }
 
   // 券還活著嗎（有面額，而且今天還沒超過到期日）
@@ -169,6 +182,23 @@
 
     couponDays: couponDays,
     minSpendFor: minSpendFor,
+    streakDays: streakDays,
+
+    /**
+     * 下一次抽獎會不會是保底（一定有券）
+     * @returns {object} { sure, why, left } why：'first' 新手保底｜'streak' 全勤保底
+     */
+    nextGuarantee: function () {
+      var st = read();
+      if (st.draws === 0 && cfg().firstDrawGuaranteed === true) {
+        return { sure: true, why: 'first', left: 0 };
+      }
+      var days = streakDays();
+      if (!days) { return { sure: false, why: '', left: 0 }; }
+      var next = nextStreak(st);
+      var left = (days - (next % days)) % days;
+      return { sure: left === 0, why: 'streak', left: left };
+    },
 
     // 目前設定裡最大的那個面額，給文案用（改設定時文案會自己跟著變）
     topPrize: function () {
@@ -188,6 +218,7 @@
         joined: !!st.phone,
         draws: st.draws,
         best: st.best,
+        streak: st.streak,
         lastDraw: st.lastDraw,
         coupon: st.coupon ? JSON.parse(JSON.stringify(st.coupon)) : null
       };
@@ -230,9 +261,19 @@
       if (!gate.ok) { return { ok: false, reason: gate.reason }; }
 
       var st = read();
-      var list = prizeList();
-      var total = 0;
+      var guarantee = this.nextGuarantee();
+      var sure = guarantee.sure;
+
+      // 保底時只在「有面額」的獎項裡抽，等於把銘謝惠顧那一格拿掉
+      var list = [];
+      var all = prizeList();
       var i;
+      for (i = 0; i < all.length; i++) {
+        if (!sure || all[i].amount > 0) { list.push(all[i]); }
+      }
+      if (!list.length) { list = all; }
+
+      var total = 0;
       for (i = 0; i < list.length; i++) { total += list[i].weight; }
 
       var roll = Math.random() * total;
@@ -242,6 +283,7 @@
         if (roll < 0) { amount = list[i].amount; break; }
       }
 
+      st.streak = nextStreak(st);
       st.lastDraw = dayKey(new Date());
       st.draws += 1;
       if (amount > st.best) { st.best = amount; }
@@ -269,6 +311,9 @@
         ok: true,
         amount: amount,
         outcome: outcome,
+        guaranteed: sure,
+        guaranteeWhy: sure ? guarantee.why : '',
+        streak: st.streak,
         previous: had ? had.amount : 0,
         coupon: st.coupon ? JSON.parse(JSON.stringify(st.coupon)) : null
       };

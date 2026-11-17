@@ -1558,10 +1558,15 @@
     function renderButton() {
       var gate = L.canDraw();
       var st = L.state();
+      var g = L.nextGuarantee();
       if (gate.ok) {
         goBtn.disabled = false;
-        goBtn.textContent = '今天還沒抽，抽一次';
-        subNote.textContent = '每天可以抽一次，過午夜 12 點就會重置。';
+        goBtn.textContent = g.sure ? '這一次保證有券，抽！' : '今天還沒抽，抽一次';
+        subNote.textContent = g.sure
+          ? (g.why === 'first'
+            ? '第一次抽我們不讓你空手而回，這一次一定有券。'
+            : '連續抽滿 ' + L.streakDays() + ' 天，這一次保證有券。')
+          : guaranteeHint(g);
       } else {
         goBtn.disabled = true;
         goBtn.textContent = '今天已經抽過了';
@@ -1569,7 +1574,16 @@
       }
       $('#lucky-stat').textContent = '手機 ' + st.phone.slice(0, 4) + '***' +
         st.phone.slice(-3) + '　已抽 ' + st.draws + ' 次' +
+        (st.streak > 1 ? '　連續 ' + st.streak + ' 天' : '') +
         (st.best > 0 ? '　最佳紀錄 ' + money(st.best) : '');
+    }
+
+    // 還差幾天就輪到全勤保底
+    function guaranteeHint(g) {
+      if (!L.streakDays() || !g.left) {
+        return '每天可以抽一次，過午夜 12 點就會重置。';
+      }
+      return '每天可以抽一次。再連續抽 ' + g.left + ' 天，那一次就保證有券。';
     }
 
     /* ----- 跑格子動畫；使用者偏好減少動態時直接顯示結果 ----- */
@@ -1601,12 +1615,16 @@
 
     /* ----- 結果文案 ----- */
     function resultText(r) {
+      var tail = r.guaranteed
+        ? '（' + (r.guaranteeWhy === 'first' ? '新手保底' : '連續 ' + r.streak + ' 天全勤保底') +
+          '，這一次本來就不會槓龜）'
+        : '';
       if (r.outcome === 'none') {
         return '<span class="r-none">銘謝惠顧</span>這次沒抽到，明天再來一次。';
       }
       if (r.outcome === 'new') {
         return '<span class="r-win">抽到 ' + money(r.amount) + '！</span>' +
-          '券已經放進你的卡包，結帳時會自動折抵。';
+          '券已經放進你的卡包，結帳時會自動折抵。' + tail;
       }
       if (r.outcome === 'upgrade') {
         return '<span class="r-win">升級成 ' + money(r.amount) + '！</span>' +
