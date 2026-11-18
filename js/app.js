@@ -1550,7 +1550,7 @@
 
     var ev = 0;
     table.forEach(function (row) { ev += row.amount * row.percent / 100; });
-    $('#odds-ev').innerHTML = '平均每抽一次的期望值是 <strong>' + money(Math.round(ev)) +
+    $('#odds-ev').innerHTML = '平均每抽一次大約抽到 <strong>' + money(Math.round(ev)) +
       '</strong>，券的有效期限是 <strong>' + L.couponDays() + ' 天</strong>，' +
       '最低消費一律是面額的 20 倍（也就是最多折掉訂單的 5%）。';
 
